@@ -13,6 +13,12 @@ window.addEventListener('DOMContentLoaded', () => {
   if (savedToken && tokenInput) {
     tokenInput.value = savedToken;
   }
+
+  const savedAaiKey = localStorage.getItem('assemblyai_key');
+  const aaiInput = document.getElementById('settingAssemblyAiKey');
+  if (savedAaiKey && aaiInput) {
+    aaiInput.value = savedAaiKey;
+  }
 });
 
 // Helper to set sample URL
@@ -75,11 +81,16 @@ async function handleGenerate() {
   updateLoadingStep(1);
   setTimeout(() => updateLoadingStep(2), 1200);
 
+  const aaiKey = document.getElementById('settingAssemblyAiKey') ? document.getElementById('settingAssemblyAiKey').value.trim() : (localStorage.getItem('assemblyai_key') || '');
+  const apifyTok = document.getElementById('settingApifyToken') ? document.getElementById('settingApifyToken').value.trim() : (localStorage.getItem('apify_token') || '');
+
   const payload = {
     url: url,
     max_clips: parseInt(document.getElementById('settingMaxClips').value) || 4,
     min_duration: 25,
-    max_duration: 58
+    max_duration: 58,
+    assemblyai_key: aaiKey,
+    apify_token: apifyTok
   };
 
   try {
@@ -471,6 +482,31 @@ async function runClientSideFallback(url) {
   };
 
   displayResults(mockData);
+}
+
+function downloadSrtSubtitles() {
+  const clip = currentClips[selectedClipIndex];
+  if (!clip) {
+    showToast('Please analyze a video first');
+    return;
+  }
+  const kit = clip.upload_kit || {};
+  let srtContent = kit.srt_subtitles;
+
+  // Fallback if srt not present directly
+  if (!srtContent) {
+    const text = clip.full_text || clip.hook_text || "Subtitles";
+    srtContent = `1\n00:00:00,000 --> 00:00:04,000\n${clip.hook_text || text}\n\n2\n00:00:04,000 --> 00:00:10,000\n${text}\n`;
+  }
+
+  const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `YouTube_Shorts_${clip.clip_id || 'clip'}_subtitles.srt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('💬 Subtitles downloaded (.srt)!');
 }
 
 function downloadMetadataTxt() {

@@ -163,8 +163,12 @@ def parse_vtt_subtitles(vtt_text: str) -> List[Dict[str, Any]]:
 
     return segments
 
-def get_transcript(url: str) -> List[Dict[str, Any]]:
-    """Retrieve full transcript from YouTube using available automatic or uploaded subtitles."""
+def get_transcript(url: str, assemblyai_key: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Retrieve transcript with word-level subtitles.
+    1. Checks native YouTube captions (json3/vtt).
+    2. If missing or if AssemblyAI key is provided, transcribes audio using AssemblyAI.
+    """
     url = clean_youtube_url(url)
     ydl_opts = {
         'skip_download': True,
@@ -177,41 +181,61 @@ def get_transcript(url: str) -> List[Dict[str, Any]]:
         
         subs = info.get('subtitles') or {}
         auto_subs = info.get('automatic_captions') or {}
-        
-        # Priority order for language keys: en, en-US, en-GB, then any available
         all_subs = {**auto_subs, **subs}
         lang_keys = list(all_subs.keys())
-        
-        if not lang_keys:
-            return []
 
-        chosen_key = None
-        for pref in ['en', 'en-US', 'en-GB', 'en-auto']:
-            if pref in lang_keys:
-                chosen_key = pref
-                break
-        if not chosen_key:
-            chosen_key = lang_keys[0]
+        # If native YouTube captions exist, use them
+        if lang_keys:
+            chosen_key = None
+            for pref in ['en', 'en-US', 'en-GB', 'en-auto']:
+                if pref in lang_keys:
+                    chosen_key = pref
+                    break
+            if not chosen_key:
+                chosen_key = lang_keys[0]
 
-        formats = all_subs.get(chosen_key, [])
-        
-        # Prefer json3 for high precision word timing, else vtt
-        json3_url = next((f['url'] for f in formats if f.get('ext') == 'json3'), None)
-        vtt_url = next((f['url'] for f in formats if f.get('ext') == 'vtt'), None)
-        
-        req_headers = {'User-Agent': 'Mozilla/5.0'}
-        
-        if json3_url:
-            req = urllib.request.Request(json3_url, headers=req_headers)
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                return parse_json3_subtitles(data)
-        
-        if vtt_url:
-            req = urllib.request.Request(vtt_url, headers=req_headers)
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                data = resp.read().decode('utf-8')
-                return parse_vtt_subtitles(data)
+            formats = all_subs.get(chosen_key, [])
+            json3_url = next((f['url'] for f in formats if f.get('ext') == 'json3'), None)
+            vtt_url = next((f['url'] for f in formats if f.get('ext') == 'vtt'), None)
+            req_headers = {'User-Agent': 'Mozilla/5.0'}
+
+            if json3_url:
+                try:
+                    req = urllib.request.Request(json3_url, headers=req_headers)
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        data = json.loads(resp.read().decode('utf-8'))
+                        return parse_json3_subtitles(data)
+                except Exception:
+                    pass
+
+            if vtt_url:
+                try:
+                    req = urllib.request.Request(vtt_url, headers=req_headers)
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        data = resp.read().decode('utf-8')
+                        return parse_vtt_subtitles(data)
+                except Exception:
+                    pass
+
+        # If no native captions or AssemblyAI key provided: use AssemblyAI
+        from backend.config import ASSEMBLYAI_API_KEY
+        key_to_use = assemblyai_key or ASSEMBLYAI_API_KEY
+        if key_to_use:
+            try:
+                from backend.assemblyai_transcriber import transcribe_with_assemblyai
+                # Find an audio stream URL
+                formats = info.get('formats', [])
+                audio_stream = next((f['url'] for f in formats if f.get('acodec') != 'none' and f.get('vcodec') == 'none'), None)
+                if not audio_stream and formats:
+                    audio_stream = formats[-1].get('url')
+                
+                if audio_stream:
+                    print("[AssemblyAI] Transcribing stream via AssemblyAI...")
+                    res = transcribe_with_assemblyai(audio_stream, key_to_use)
+                    if res.get("segments"):
+                        return res["segments"]
+            except Exception as e:
+                print(f"[AssemblyAI] Fallback transcription error: {e}")
 
     return []
 

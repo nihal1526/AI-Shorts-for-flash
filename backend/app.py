@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from backend.config import (
     FRONTEND_DIR, DOWNLOADS_DIR, RENDERED_DIR, TEMP_DIR, 
-    SUBTITLE_PRESETS, APIFY_API_TOKEN
+    SUBTITLE_PRESETS, APIFY_API_TOKEN, ASSEMBLYAI_API_KEY
 )
 from backend.youtube_downloader import (
     get_video_info, get_transcript, download_video_clip_fast, clean_youtube_url
@@ -45,6 +45,7 @@ class AnalyzeRequest(BaseModel):
     max_duration: Optional[int] = 58
     api_key: Optional[str] = None
     apify_token: Optional[str] = None
+    assemblyai_key: Optional[str] = None
 
 class RenderRequest(BaseModel):
     url: str
@@ -89,8 +90,8 @@ async def analyze_video(req: AnalyzeRequest):
         raise HTTPException(status_code=400, detail=f"Failed to fetch video info: {str(e)}")
 
     try:
-        # Step 2: Fetch Subtitles / Transcript
-        segments = get_transcript(url)
+        # Step 2: Fetch Subtitles / Transcript (Native YouTube or AssemblyAI)
+        segments = get_transcript(url, assemblyai_key=req.assemblyai_key or ASSEMBLYAI_API_KEY)
     except Exception as e:
         segments = []
 

@@ -105,6 +105,10 @@ Watch till the end for the shocking realization!
     # Usually 1.5s - 2.5s into the clip where the speaker is animated
     thumbnail_sec = round(start_time + 1.8, 1)
 
+    # 5. Generate standard .SRT Subtitles for YouTube Studio
+    from backend.assemblyai_transcriber import generate_srt_from_segments
+    srt_content = generate_srt_from_segments(clip.get("segments", []), clip_start=start_time)
+
     return {
         "titles": title_options,
         "primary_title": title_options[0],
@@ -113,6 +117,7 @@ Watch till the end for the shocking realization!
         "tags_string": tags_string,
         "recommended_thumbnail_time": thumbnail_sec,
         "hook_summary": hook_summary,
+        "srt_subtitles": srt_content,
         "hashtags": ["#shorts", "#youtubeshorts", "#viral", "#trending", "#fyp", "#podcast", "#clips"]
     }
 

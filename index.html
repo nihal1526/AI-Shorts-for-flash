@@ -166,23 +166,43 @@
             </div>
           </div>
 
-          <!-- Apify Cloud Downloader Integration -->
-          <div class="pt-3 border-t border-slate-800">
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-slate-300 font-semibold flex items-center">
-                <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 mr-1.5 text-cyan-400"></i>
-                Apify Cloud Downloader Token
-              </label>
-              <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded font-mono border border-cyan-500/20">streamers/youtube-video-downloader</span>
+          <!-- Cloud Integrations: Apify & AssemblyAI -->
+          <div class="pt-3 border-t border-slate-800 space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-slate-300 font-semibold flex items-center">
+                  <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 mr-1.5 text-cyan-400"></i>
+                  Apify Cloud Downloader Token
+                </label>
+                <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded font-mono border border-cyan-500/20">streamers/youtube-video-downloader</span>
+              </div>
+              <input 
+                id="settingApifyToken" 
+                type="password" 
+                placeholder="Paste your Apify API Token (saved in your browser)"
+                value=""
+                onchange="localStorage.setItem('apify_token', this.value.trim())"
+                class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-purple-500 font-mono"
+              />
             </div>
-            <input 
-              id="settingApifyToken" 
-              type="password" 
-              placeholder="Paste your Apify API Token (saved in your browser)"
-              value=""
-              onchange="localStorage.setItem('apify_token', this.value.trim())"
-              class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-purple-500 font-mono"
-            />
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-slate-300 font-semibold flex items-center">
+                  <i data-lucide="mic" class="w-3.5 h-3.5 mr-1.5 text-indigo-400"></i>
+                  AssemblyAI Speech-to-Text API Key
+                </label>
+                <span class="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded font-mono border border-indigo-500/20">Word-Level Timestamps & SRT</span>
+              </div>
+              <input 
+                id="settingAssemblyAiKey" 
+                type="password" 
+                placeholder="Paste your AssemblyAI API Key (saved in your browser)"
+                value=""
+                onchange="localStorage.setItem('assemblyai_key', this.value.trim())"
+                class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-purple-500 font-mono"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -442,14 +462,24 @@
               <span id="kitKeyframeTime" class="font-bold text-purple-300 font-mono">1.8s</span>
             </div>
 
-            <!-- Download Complete Upload Kit as TXT -->
-            <button 
-              onclick="downloadMetadataTxt()" 
-              class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-2 transition"
-            >
-              <i data-lucide="file-down" class="w-4 h-4 text-purple-400"></i>
-              <span>Download Upload Kit (.txt)</span>
-            </button>
+            <!-- Action Buttons: Download SRT Subtitles & TXT Upload Kit -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button 
+                onclick="downloadSrtSubtitles()" 
+                class="py-2.5 px-3 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+              >
+                <i data-lucide="subtitles" class="w-4 h-4 text-indigo-400"></i>
+                <span>Download .SRT</span>
+              </button>
+
+              <button 
+                onclick="downloadMetadataTxt()" 
+                class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+              >
+                <i data-lucide="file-down" class="w-4 h-4 text-purple-400"></i>
+                <span>Upload Kit (.txt)</span>
+              </button>
+            </div>
 
           </div>
         </div>
