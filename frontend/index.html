@@ -41,7 +41,7 @@
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-[#080C14] text-slate-100 min-h-screen font-sans selection:bg-purple-600 selection:text-white">
 
@@ -421,6 +421,15 @@
               <span id="kitKeyframeTime" class="font-bold text-purple-300 font-mono">1.8s</span>
             </div>
 
+            <!-- Download Complete Upload Kit as TXT -->
+            <button 
+              onclick="downloadMetadataTxt()" 
+              class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-2 transition"
+            >
+              <i data-lucide="file-down" class="w-4 h-4 text-purple-400"></i>
+              <span>Download Upload Kit (.txt)</span>
+            </button>
+
           </div>
         </div>
 
@@ -435,7 +444,7 @@
     <span id="toastMsg">Copied to clipboard!</span>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="app.js"></script>
   <script>
     lucide.createIcons();
   </script>

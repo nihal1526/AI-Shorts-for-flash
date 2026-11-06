@@ -115,3 +115,4 @@ Watch till the end for the shocking realization!
         "hook_summary": hook_summary,
         "hashtags": ["#shorts", "#youtubeshorts", "#viral", "#trending", "#fyp", "#podcast", "#clips"]
     }
+

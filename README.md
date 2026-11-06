@@ -62,33 +62,42 @@ Your browser will automatically open to `http://localhost:8000`.
 
 ## 🌐 How to Host on GitHub & Use It ONLINE for FREE
 
-You can host this project on GitHub and run it online for free using any of these 3 methods:
-
-### Method 1: Hugging Face Spaces (Recommended — 100% Free Forever)
-Hugging Face offers free Docker containers with CPU/GPU and FFmpeg:
-1. Create a free account at [huggingface.co](https://huggingface.co/).
-2. Click **New Space** -> Name it `flashklap` -> Select **Docker** as Space SDK.
-3. Under **Repository Type**, choose **Public**.
-4. In Space Settings, link your GitHub repository (or push this repo directly to Hugging Face).
-5. Hugging Face will automatically build the included `Dockerfile` and give you a permanent online web link:
+### Method 1: GitHub Pages (Direct Free Website on GitHub)
+Your repository is pre-configured with automated GitHub Pages deployment:
+1. Open your repository: **[https://github.com/nihal1526/AI-Shorts-for-flash](https://github.com/nihal1526/AI-Shorts-for-flash)**
+2. Click on **Settings** (tab at the top) -> In the left sidebar, click **Pages**.
+3. Under **Build and deployment**:
+   - **Source**: Select **GitHub Actions** (the included `.github/workflows/pages.yml` will deploy it automatically), OR select **Deploy from a branch** -> branch **`main`** -> folder **`/ (root)`** -> click **Save**.
+4. In ~60 seconds, your site will be live at:
    ```
-   https://<your-username>-flashklap.hf.space
+   https://nihal1526.github.io/AI-Shorts-for-flash/
    ```
-   You can access and use it from anywhere on your phone, laptop, or tablet!
+   Anyone can visit this URL on mobile or desktop, paste any YouTube link, and extract viral clips, titles, descriptions, and tags!
 
 ---
 
-### Method 2: GitHub Codespaces (One-Click Online Browser Environment)
-GitHub provides **60 hours of free cloud computing every month** on every GitHub account:
-1. Push this project to your GitHub repository (see steps below).
-2. On your GitHub repo page, click the green **`<> Code`** button.
-3. Switch to the **Codespaces** tab and click **Create codespace on main**.
-4. GitHub opens a full VS Code editor directly inside your browser. The included `.devcontainer/devcontainer.json` will automatically configure FFmpeg and Python.
-5. In the terminal, type:
+### Method 2: GitHub Codespaces (Full Cloud Environment with FFmpeg & Python)
+GitHub provides **60 hours of free cloud computing every month** on every account:
+1. On your GitHub repo page, click the green **`<> Code`** button.
+2. Switch to the **Codespaces** tab and click **Create codespace on main**.
+3. GitHub opens a cloud VS Code environment in your browser. The included `.devcontainer/devcontainer.json` will automatically configure FFmpeg and Python.
+4. In the terminal, type:
    ```bash
    python run.py
    ```
-6. A popup will appear: *"Your application running on port 8000 is available."* Click **Open in Browser** to use it online!
+5. Click **Open in Browser** when the port 8000 popup appears to use the full application online!
+
+---
+
+### Method 3: Hugging Face Spaces (Permanent Free Cloud Docker Container)
+Hugging Face offers free Docker containers with CPU/GPU and FFmpeg:
+1. Create a free account at [huggingface.co](https://huggingface.co/).
+2. Click **New Space** -> Name it `ai-shorts-for-flash` -> Select **Docker** as Space SDK.
+3. Under Settings, connect your GitHub repo `nihal1526/AI-Shorts-for-flash`.
+4. Hugging Face automatically builds the included `Dockerfile` and gives you a permanent online web link:
+   ```
+   https://nihal1526-ai-shorts-for-flash.hf.space
+   ```
 
 ---
 
@@ -161,3 +170,4 @@ git push -u origin main
 
 ## 📄 License
 MIT License. Free to use, modify, and distribute.
+

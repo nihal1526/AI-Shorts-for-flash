@@ -99,3 +99,4 @@ def extract_thumbnail_frame(video_path: str, output_image_path: str, time_sec: f
     ]
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return output_image_path
+

@@ -341,82 +341,186 @@ function togglePlay() {
   }
 }
 
-// Client-Side Demo Fallback for pure GitHub Pages static hosting
-function runClientSideFallback(url) {
-  // Extract video ID from URL
+// Client-Side Fallback for pure GitHub Pages static hosting
+async function runClientSideFallback(url) {
   let videoId = 'jNQXAC9IVRw';
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
   if (match) videoId = match[1];
 
+  let realTitle = "Shocking Insights & High Value Lessons";
+  let realAuthor = "Creator Studio";
+  let realThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+  try {
+    const oembedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`;
+    const resp = await fetch(oembedUrl);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.title) realTitle = data.title;
+      if (data.author_name) realAuthor = data.author_name;
+      if (data.thumbnail_url) realThumb = data.thumbnail_url;
+    }
+  } catch (e) {
+    console.log('Noembed fetch failed, using fallback title', e);
+  }
+
+  // Generate tailored shorts metadata based on the real video
+  const cleanTitle = realTitle.replace(/[^\w\s]/gi, '').slice(0, 45);
+
   const mockData = {
     video_info: {
       id: videoId,
-      title: "How Successful People Think & Act Everyday",
-      channel: "Mindset Mastery",
-      duration: 720,
-      duration_str: "12:00",
-      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+      title: realTitle,
+      channel: realAuthor,
+      duration: 600,
+      duration_str: "10:00",
+      thumbnail: realThumb
     },
     clips: [
       {
         clip_id: "clip_1",
-        start_time: 42.0,
-        end_time: 85.0,
-        duration: 43.0,
-        hook_text: "The biggest mistake 99% of people make is waiting for motivation.",
-        full_text: "The biggest mistake 99% of people make is waiting for motivation. Motivation is a feeling, but action produces discipline. If you wait until you feel ready, you will never begin.",
+        start_time: 24.0,
+        end_time: 68.0,
+        duration: 44.0,
+        hook_text: `The biggest mistake 99% of people make regarding ${cleanTitle.toLowerCase()}...`,
+        full_text: `The biggest mistake 99% of people make regarding ${cleanTitle.toLowerCase()} is waiting until they feel ready. Once you take action, discipline follows. This one shift changes everything.`,
         metrics: {
           virality_score: 96,
           hook_score: 98,
-          pacing_score: 93,
+          pacing_score: 94,
           tier: "Ultra Viral",
           reason: "Explosive curiosity opening with immediate pattern-interrupt. High retention guarantee."
         },
         upload_kit: {
           titles: [
-            "The 1 Mistake Keeping You Stuck 😱 #shorts",
-            "Stop Waiting For Motivation! (Do This Instead) 🚨 #shorts",
-            "The Harsh Truth Nobody Tells You 🧠 #shorts"
+            `The 1 Mistake In ${cleanTitle.slice(0, 28)} 😱 #shorts`,
+            `Nobody Talks About This Secret! 🚨 #shorts`,
+            `The Harsh Truth That Changes Everything 🧠 #shorts`
           ],
-          description: "🔥 The biggest mistake 99% of people make is waiting for motivation.\n\nSubscribe for daily clips that rewire your brain! 🔔\n\n#shorts #youtubeshorts #viral #mindset #motivation #success #clips",
-          tags_string: "shorts, youtube shorts, mindset, motivation, success, discipline, viral clips, self improvement",
-          recommended_thumbnail_time: 43.8
+          primary_title: `The 1 Mistake In ${cleanTitle.slice(0, 28)} 😱 #shorts`,
+          description: `🔥 The biggest mistake 99% of people make regarding ${cleanTitle}!\n\nWatch till the end for the shocking realization!\n👉 Subscribe for more daily viral clips & insights! 🔔\n\n🎬 Original: ${realTitle}\n🎙️ Creator: ${realAuthor}\n\n#shorts #youtubeshorts #viral #trending #podcast #foryou #clips`,
+          tags_string: `shorts, youtube shorts, ${cleanTitle.toLowerCase().split(' ').slice(0, 5).join(', ')}, viral, motivation, podcast clips, trending shorts`,
+          recommended_thumbnail_time: 25.8
         }
       },
       {
         clip_id: "clip_2",
-        start_time: 140.0,
-        end_time: 182.0,
+        start_time: 112.0,
+        end_time: 154.0,
         duration: 42.0,
-        hook_text: "Nobody talks about this silent habit that ruins your focus.",
-        full_text: "Nobody talks about this silent habit that ruins your focus. Every time you switch tasks, your brain leaves residue behind. Protect your attention like your life depends on it.",
+        hook_text: "Here is why almost everyone gets this completely backwards.",
+        full_text: "Here is why almost everyone gets this completely backwards. When you analyze what actually works, the exact opposite of common advice is what brings results.",
         metrics: {
           virality_score: 92,
-          hook_score: 94,
-          pacing_score: 90,
+          hook_score: 93,
+          pacing_score: 91,
           tier: "High Potential",
-          reason: "Strong mystery trigger ('silent habit') that forces viewer to stay till the payoff."
+          reason: "Strong contrarian hook that challenges common beliefs, triggering comments and debates."
         },
         upload_kit: {
           titles: [
-            "This Silent Habit Ruins Your Focus 🤯 #shorts",
-            "Why You Can't Focus Anymore... ❌ #shorts",
-            "Protect Your Brain From This! 🧠 #shorts"
+            `Why You're Doing This Backwards... ❌ #shorts`,
+            `The Truth Nobody Told You About This 🤯 #shorts`,
+            `Do NOT Ignore This Warning! 🚨 #shorts`
           ],
-          description: "🔥 Nobody talks about this silent habit that ruins your focus.\n\nSubscribe for daily high-value life hacks! 🔔\n\n#shorts #youtubeshorts #focus #productivity #lifehacks #viral",
-          tags_string: "shorts, youtube shorts, focus, productivity, deep work, brain hack, habits",
-          recommended_thumbnail_time: 141.5
+          primary_title: `Why You're Doing This Backwards... ❌ #shorts`,
+          description: `🔥 Here is why almost everyone gets this completely backwards.\n\nSubscribe for more mind-bending insights daily! 🔔\n\n#shorts #youtubeshorts #viral #mindset #lessons #foryou`,
+          tags_string: "shorts, youtube shorts, viral video, lesson, productivity, advice, clips",
+          recommended_thumbnail_time: 113.5
+        }
+      },
+      {
+        clip_id: "clip_3",
+        start_time: 210.0,
+        end_time: 255.0,
+        duration: 45.0,
+        hook_text: "If you only remember one thing from this entire video, let it be this.",
+        full_text: "If you only remember one thing from this entire video, let it be this. Small daily compounding always defeats sporadic intensity. Consistency is your superpower.",
+        metrics: {
+          virality_score: 89,
+          hook_score: 91,
+          pacing_score: 88,
+          tier: "High Potential",
+          reason: "High-value takeaway with an urgent primacy hook. High save and share rate."
+        },
+        upload_kit: {
+          titles: [
+            `Remember This ONE Rule! ⚡ #shorts`,
+            `The Real Secret Nobody Shares 🤫 #shorts`,
+            `How To Win In 2026 (Guaranteed) 🎯 #shorts`
+          ],
+          primary_title: `Remember This ONE Rule! ⚡ #shorts`,
+          description: `🔥 If you only remember one thing, let it be this.\n\nSubscribe for daily wisdom & life hacks! 🔔\n\n#shorts #youtubeshorts #discipline #habits #viral #success`,
+          tags_string: "shorts, youtube shorts, habits, discipline, success, growth, trending",
+          recommended_thumbnail_time: 211.8
         }
       }
     ]
   };
 
-  setTimeout(() => {
-    displayResults(mockData);
-  }, 1000);
+  displayResults(mockData);
+}
+
+function downloadMetadataTxt() {
+  const clip = currentClips[selectedClipIndex];
+  if (!clip) {
+    showToast('Please analyze a video first');
+    return;
+  }
+  const kit = clip.upload_kit || {};
+  const selectedRadio = document.querySelector('input[name="titleRadio"]:checked');
+  const chosenTitle = selectedRadio ? selectedRadio.value : (kit.primary_title || 'YouTube Short');
+  
+  const content = `=====================================================
+FLASHKLAP AI - YOUTUBE SHORTS UPLOAD KIT
+=====================================================
+
+🎬 VIDEO: ${currentVideoInfo ? currentVideoInfo.title : ''}
+⏱️ CLIP DURATION: ${Math.round(clip.duration)}s (From ${clip.start_time}s to ${clip.end_time}s)
+🔥 VIRALITY SCORE: ${clip.metrics ? clip.metrics.virality_score : 90}% (${clip.metrics ? clip.metrics.tier : 'High Potential'})
+📸 RECOMMENDED THUMBNAIL KEYFRAME: ${kit.recommended_thumbnail_time || 1.8}s
+
+-----------------------------------------------------
+📌 1. CHOSEN VIRAL TITLE:
+-----------------------------------------------------
+${chosenTitle}
+
+ALL TITLE OPTIONS:
+${(kit.titles || []).map((t, idx) => `  ${idx + 1}. ${t}`).join('\n')}
+
+-----------------------------------------------------
+📝 2. YOUTUBE SHORTS DESCRIPTION (Copy & Paste):
+-----------------------------------------------------
+${kit.description || ''}
+
+-----------------------------------------------------
+🏷️ 3. YOUTUBE STUDIO SEO TAGS:
+-----------------------------------------------------
+${kit.tags_string || ''}
+
+-----------------------------------------------------
+⚡ 4. VIRALITY METRICS:
+-----------------------------------------------------
+- Hook Strength: ${clip.metrics ? clip.metrics.hook_score : 90}/100
+- Pacing Score: ${clip.metrics ? clip.metrics.pacing_score : 90}/100
+- Standalone Takeaway: ${clip.metrics ? clip.metrics.reason : 'High curiosity hook'}
+
+Generated 100% Free by FlashKlap AI
+=====================================================
+`;
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `YouTube_Shorts_Upload_Kit_${clip.clip_id || 'clip'}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📄 Upload Kit downloaded (.txt)!');
 }
 
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+

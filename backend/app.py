@@ -226,3 +226,12 @@ if FRONTEND_DIR.exists():
     @app.get("/")
     async def serve_index():
         return FileResponse(FRONTEND_DIR / "index.html")
+
+    @app.get("/styles.css")
+    async def serve_styles():
+        return FileResponse(FRONTEND_DIR / "styles.css", media_type="text/css")
+
+    @app.get("/app.js")
+    async def serve_app_js():
+        return FileResponse(FRONTEND_DIR / "app.js", media_type="application/javascript")
+

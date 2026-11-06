@@ -119,3 +119,4 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             dialogue_lines.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{text_content}")
 
     return header + "\n".join(dialogue_lines) + "\n"
+

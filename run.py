@@ -22,3 +22,4 @@ def open_browser():
 if __name__ == "__main__":
     threading.Thread(target=open_browser, daemon=True).start()
     uvicorn.run("backend.app:app", host=HOST, port=PORT, reload=False)
+
