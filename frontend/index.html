@@ -132,36 +132,57 @@
           <i data-lucide="chevron-down" id="settingsChevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
         </button>
 
-        <div id="settingsPanel" class="hidden mt-4 p-4 rounded-xl bg-[#101623] border border-slate-800 text-left max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <!-- Layout -->
-          <div>
-            <label class="block text-slate-400 font-medium mb-1.5">9:16 Video Layout</label>
-            <select id="settingLayout" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
-              <option value="blur_fill" selected>Blur Fill (Podcast / No cut)</option>
-              <option value="smart_crop">Smart 9:16 Center Crop</option>
-              <option value="letterbox">Classic Letterbox</option>
-            </select>
+        <div id="settingsPanel" class="hidden mt-4 p-4 rounded-xl bg-[#101623] border border-slate-800 text-left max-w-2xl mx-auto space-y-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Layout -->
+            <div>
+              <label class="block text-slate-400 font-medium mb-1.5">9:16 Video Layout</label>
+              <select id="settingLayout" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+                <option value="blur_fill" selected>Blur Fill (Podcast / No cut)</option>
+                <option value="smart_crop">Smart 9:16 Center Crop</option>
+                <option value="letterbox">Classic Letterbox</option>
+              </select>
+            </div>
+
+            <!-- Subtitle Style -->
+            <div>
+              <label class="block text-slate-400 font-medium mb-1.5">Caption Style</label>
+              <select id="settingSubtitle" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+                <option value="hormozi" selected>Hormozi (Viral Yellow)</option>
+                <option value="cyber_cyan">Neon Aqua (MrBeast)</option>
+                <option value="emerald">Electric Emerald</option>
+                <option value="clean_white">Minimalist White</option>
+              </select>
+            </div>
+
+            <!-- Max Clips -->
+            <div>
+              <label class="block text-slate-400 font-medium mb-1.5">Target Clips Count</label>
+              <select id="settingMaxClips" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+                <option value="3">3 Viral Clips</option>
+                <option value="4" selected>4 Viral Clips</option>
+                <option value="5">5 Viral Clips</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Subtitle Style -->
-          <div>
-            <label class="block text-slate-400 font-medium mb-1.5">Caption Style</label>
-            <select id="settingSubtitle" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
-              <option value="hormozi" selected>Hormozi (Viral Yellow)</option>
-              <option value="cyber_cyan">Neon Aqua (MrBeast)</option>
-              <option value="emerald">Electric Emerald</option>
-              <option value="clean_white">Minimalist White</option>
-            </select>
-          </div>
-
-          <!-- Max Clips -->
-          <div>
-            <label class="block text-slate-400 font-medium mb-1.5">Target Clips Count</label>
-            <select id="settingMaxClips" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
-              <option value="3">3 Viral Clips</option>
-              <option value="4" selected>4 Viral Clips</option>
-              <option value="5">5 Viral Clips</option>
-            </select>
+          <!-- Apify Cloud Downloader Integration -->
+          <div class="pt-3 border-t border-slate-800">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-slate-300 font-semibold flex items-center">
+                <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 mr-1.5 text-cyan-400"></i>
+                Apify Cloud Downloader Token
+              </label>
+              <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded font-mono border border-cyan-500/20">streamers/youtube-video-downloader</span>
+            </div>
+            <input 
+              id="settingApifyToken" 
+              type="password" 
+              placeholder="Paste your Apify API Token (saved in your browser)"
+              value=""
+              onchange="localStorage.setItem('apify_token', this.value.trim())"
+              class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-purple-500 font-mono"
+            />
           </div>
         </div>
       </div>

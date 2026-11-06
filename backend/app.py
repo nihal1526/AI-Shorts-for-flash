@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from backend.config import (
     FRONTEND_DIR, DOWNLOADS_DIR, RENDERED_DIR, TEMP_DIR, 
-    SUBTITLE_PRESETS
+    SUBTITLE_PRESETS, APIFY_API_TOKEN
 )
 from backend.youtube_downloader import (
     get_video_info, get_transcript, download_video_clip_fast, clean_youtube_url
@@ -44,6 +44,7 @@ class AnalyzeRequest(BaseModel):
     min_duration: Optional[int] = 25
     max_duration: Optional[int] = 58
     api_key: Optional[str] = None
+    apify_token: Optional[str] = None
 
 class RenderRequest(BaseModel):
     url: str
@@ -57,6 +58,7 @@ class RenderRequest(BaseModel):
     layout_mode: Optional[str] = "blur_fill"  # 'blur_fill', 'smart_crop', 'letterbox'
     subtitle_style: Optional[str] = "hormozi" # 'hormozi', 'cyber_cyan', 'emerald', 'clean_white'
     uppercase: Optional[bool] = True
+    apify_token: Optional[str] = None
 
 @app.get("/api/health")
 async def health():
@@ -145,12 +147,13 @@ async def render_clip(req: RenderRequest):
     thumb_path = str(RENDERED_DIR / thumb_filename)
 
     try:
-        # 1. Download only the specific section fast
+        # 1. Download only the specific section fast (via Apify actor streamers/youtube-video-downloader or local fallback)
         download_video_clip_fast(
             url=req.url,
             start_sec=req.start_time,
             end_sec=req.end_time,
-            output_path=raw_path
+            output_path=raw_path,
+            apify_token=req.apify_token or APIFY_API_TOKEN
         )
 
         # 2. Generate ASS dynamic subtitles

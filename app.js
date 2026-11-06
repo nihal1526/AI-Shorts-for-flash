@@ -6,6 +6,15 @@ let selectedClipIndex = 0;
 let currentRenderedUrl = null;
 let subtitleInterval = null;
 
+// Initialize on DOM load
+window.addEventListener('DOMContentLoaded', () => {
+  const savedToken = localStorage.getItem('apify_token');
+  const tokenInput = document.getElementById('settingApifyToken');
+  if (savedToken && tokenInput) {
+    tokenInput.value = savedToken;
+  }
+});
+
 // Helper to set sample URL
 function setSampleUrl(url) {
   document.getElementById('youtubeUrlInput').value = url;
@@ -278,6 +287,8 @@ async function handleRenderClip() {
   renderBtn.disabled = true;
   renderingOverlay.classList.remove('hidden');
 
+  const apifyToken = document.getElementById('settingApifyToken') ? document.getElementById('settingApifyToken').value.trim() : (localStorage.getItem('apify_token') || '');
+
   const payload = {
     url: document.getElementById('youtubeUrlInput').value.trim(),
     clip_id: clip.clip_id || `clip_${selectedClipIndex + 1}`,
@@ -289,7 +300,8 @@ async function handleRenderClip() {
     segments: clip.segments || [],
     layout_mode: document.getElementById('settingLayout').value,
     subtitle_style: document.getElementById('settingSubtitle').value,
-    uppercase: true
+    uppercase: true,
+    apify_token: apifyToken
   };
 
   try {

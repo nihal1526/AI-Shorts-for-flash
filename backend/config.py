@@ -15,9 +15,20 @@ TEMP_DIR = STORAGE_DIR / "temp"
 for directory in [DOWNLOADS_DIR, RENDERED_DIR, TEMP_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
+# Load .env file if present
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    with open(env_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 # Server Configuration
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", 8000))
+APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN", "")
 
 # Subtitle styling presets (ASS subtitle formatting)
 SUBTITLE_PRESETS = {

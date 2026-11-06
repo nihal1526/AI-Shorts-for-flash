@@ -215,12 +215,99 @@ def get_transcript(url: str) -> List[Dict[str, Any]]:
 
     return []
 
-def download_video_clip_fast(url: str, start_sec: float, end_sec: float, output_path: str) -> str:
-    """Download only the exact clip section using yt-dlp section download."""
+def download_with_apify(url: str, apify_token: str, output_path: str) -> Optional[str]:
+    """
+    Download YouTube video using Apify Actor: streamers/youtube-video-downloader
+    """
+    try:
+        from apify_client import ApifyClient
+        import requests
+        
+        url = clean_youtube_url(url)
+        print(f"[Apify] Initializing download with Apify actor streamers/youtube-video-downloader for {url}")
+        client = ApifyClient(apify_token.strip())
+
+        run_input = { 
+            "videos": [{ "url": url }]
+        }
+
+        # Run the actor and wait for it to finish
+        run = client.actor("streamers/youtube-video-downloader").call(run_input=run_input)
+        if not run or "default_dataset_id" not in run:
+            print("[Apify] Actor run did not return a default_dataset_id")
+            return None
+
+        # Fetch results from the run's dataset
+        dataset_id = run["default_dataset_id"] if isinstance(run, dict) else getattr(run, "default_dataset_id")
+        for item in client.dataset(dataset_id).iterate_items():
+            # Check for direct media download URL in dataset
+            media_url = (
+                item.get("downloadedFileUrl") or
+                item.get("downloadUrl") or 
+                item.get("mediaUrl") or 
+                item.get("fileUrl") or 
+                item.get("videoOnlyUrl") or
+                item.get("url") or 
+                item.get("videoUrl")
+            )
+            if media_url and isinstance(media_url, str) and (media_url.startswith("http://") or media_url.startswith("https://")):
+                print(f"[Apify] Streaming video from Apify dataset asset: {media_url[:80]}...")
+                with requests.get(media_url, stream=True, timeout=120) as r:
+                    r.raise_for_status()
+                    with open(output_path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 1024):
+                            if chunk:
+                                f.write(chunk)
+                print(f"[Apify] Successfully downloaded video to {output_path}")
+                return output_path
+
+    except Exception as e:
+        print(f"[Apify] Error running streamers/youtube-video-downloader: {e}")
+        return None
+
+    return None
+
+def download_video_clip_fast(
+    url: str, 
+    start_sec: float, 
+    end_sec: float, 
+    output_path: str,
+    apify_token: Optional[str] = None
+) -> str:
+    """
+    Download video clip section.
+    If apify_token is provided, uses Apify streamers/youtube-video-downloader actor,
+    then cuts the clip with FFmpeg.
+    Otherwise uses local yt-dlp section download.
+    """
     url = clean_youtube_url(url)
     duration = end_sec - start_sec
 
-    # Format time section for yt-dlp e.g. "*12.5-45.0"
+    # 1. Try Apify if token is provided
+    if apify_token and apify_token.strip():
+        temp_full_video = output_path.replace(".mp4", "_full.mp4")
+        apify_file = download_with_apify(url, apify_token.strip(), temp_full_video)
+        if apify_file and os.path.exists(apify_file):
+            import subprocess
+            # Cut the specific section using fast FFmpeg seek
+            cut_cmd = [
+                "ffmpeg", "-y",
+                "-ss", str(start_sec),
+                "-to", str(end_sec),
+                "-i", apify_file,
+                "-c", "copy",
+                output_path
+            ]
+            subprocess.run(cut_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Remove full video
+            try:
+                os.remove(apify_file)
+            except Exception:
+                pass
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                return output_path
+
+    # 2. Fallback to yt-dlp section download
     section_arg = f"*{start_sec:.2f}-{end_sec:.2f}"
     
     ydl_opts = {
