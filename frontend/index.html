@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlashKlap AI - Free AI YouTube Shorts Generator (Klap Alternative)</title>
+  <meta name="description" content="Turn long YouTube videos into viral YouTube Shorts for free. Auto 9:16 reframing, animated captions, viral titles, descriptions, and tags.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              dark: '#0B0F17',
+              card: '#131926',
+              border: '#1F293D'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-[#080C14] text-slate-100 min-h-screen font-sans selection:bg-purple-600 selection:text-white">
+
+  <!-- Glow Background Accents -->
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-purple-600/10 blur-[140px] pointer-events-none -z-10"></div>
+  <div class="fixed bottom-0 right-10 w-80 h-80 bg-blue-600/10 blur-[120px] pointer-events-none -z-10"></div>
+
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
+          <i data-lucide="scissors" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <span class="font-heading font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-purple-400 bg-clip-text text-transparent">FlashKlap</span>
+          <span class="ml-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">100% Free</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div class="hidden sm:flex items-center space-x-2 text-xs text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>No Limits • No Watermark</span>
+        </div>
+        <a id="githubRepoLink" href="https://github.com" target="_blank" class="flex items-center space-x-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero / Input Section -->
+    <div class="text-center max-w-3xl mx-auto mb-10 pt-4">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium mb-4">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Free Klap.app Alternative for YouTube Creators</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight text-white mb-4 leading-tight">
+        Turn YouTube Videos into <br class="hidden sm:inline">
+        <span class="bg-gradient-to-r from-purple-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent">Viral YouTube Shorts</span>
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-8">
+        Paste a video URL. FlashKlap extracts the best moments, reframes to 9:16 vertical, generates animated captions, viral titles, description, and tags ready for YouTube Studio.
+      </p>
+
+      <!-- URL Input Box -->
+      <div class="relative max-w-2xl mx-auto group">
+        <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500"></div>
+        <div class="relative flex flex-col sm:flex-row items-center bg-[#131926] border border-slate-700/80 rounded-2xl p-2 shadow-2xl">
+          <div class="flex items-center flex-1 w-full px-3 py-2">
+            <i data-lucide="youtube" class="w-6 h-6 text-red-500 mr-3 flex-shrink-0"></i>
+            <input 
+              id="youtubeUrlInput" 
+              type="text" 
+              placeholder="Paste YouTube link (e.g. https://www.youtube.com/watch?v=...)" 
+              class="w-full bg-transparent border-0 text-white placeholder-slate-500 focus:outline-none text-sm sm:text-base"
+              value=""
+            />
+          </div>
+          <button 
+            id="generateBtn" 
+            onclick="handleGenerate()"
+            class="w-full sm:w-auto mt-2 sm:mt-0 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 flex items-center justify-center space-x-2 transition duration-200"
+          >
+            <i data-lucide="wand-2" class="w-4 h-4"></i>
+            <span>Generate Shorts</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Sample Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs text-slate-400">
+        <span class="text-slate-500">Try sample:</span>
+        <button onclick="setSampleUrl('https://www.youtube.com/watch?v=jNQXAC9IVRw')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition">Me at the zoo</button>
+        <button onclick="setSampleUrl('https://www.youtube.com/watch?v=UF8uR6Z6KLc')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition">Steve Jobs Stanford Speech</button>
+      </div>
+
+      <!-- Options / Customization Toggle -->
+      <div class="mt-6">
+        <button onclick="toggleSettings()" class="inline-flex items-center space-x-1.5 text-xs font-medium text-slate-400 hover:text-purple-300 transition">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+          <span>Framing & Subtitle Settings</span>
+          <i data-lucide="chevron-down" id="settingsChevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+        </button>
+
+        <div id="settingsPanel" class="hidden mt-4 p-4 rounded-xl bg-[#101623] border border-slate-800 text-left max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <!-- Layout -->
+          <div>
+            <label class="block text-slate-400 font-medium mb-1.5">9:16 Video Layout</label>
+            <select id="settingLayout" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+              <option value="blur_fill" selected>Blur Fill (Podcast / No cut)</option>
+              <option value="smart_crop">Smart 9:16 Center Crop</option>
+              <option value="letterbox">Classic Letterbox</option>
+            </select>
+          </div>
+
+          <!-- Subtitle Style -->
+          <div>
+            <label class="block text-slate-400 font-medium mb-1.5">Caption Style</label>
+            <select id="settingSubtitle" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+              <option value="hormozi" selected>Hormozi (Viral Yellow)</option>
+              <option value="cyber_cyan">Neon Aqua (MrBeast)</option>
+              <option value="emerald">Electric Emerald</option>
+              <option value="clean_white">Minimalist White</option>
+            </select>
+          </div>
+
+          <!-- Max Clips -->
+          <div>
+            <label class="block text-slate-400 font-medium mb-1.5">Target Clips Count</label>
+            <select id="settingMaxClips" class="w-full bg-[#182032] border border-slate-700 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-purple-500">
+              <option value="3">3 Viral Clips</option>
+              <option value="4" selected>4 Viral Clips</option>
+              <option value="5">5 Viral Clips</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingSection" class="hidden max-w-md mx-auto my-12 text-center p-8 rounded-2xl bg-[#131926] border border-slate-800 shadow-2xl">
+      <div class="relative w-16 h-16 mx-auto mb-4">
+        <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+        <div class="absolute inset-2 rounded-full bg-purple-500/10 flex items-center justify-center">
+          <i data-lucide="sparkles" class="w-5 h-5 text-purple-400 animate-pulse"></i>
+        </div>
+      </div>
+      <h3 id="loadingStatusTitle" class="text-base font-semibold text-white mb-1">Analyzing Video...</h3>
+      <p id="loadingStatusDesc" class="text-xs text-slate-400">Extracting transcript and scanning for viral hooks</p>
+      
+      <!-- Progress Steps -->
+      <div class="mt-6 space-y-2 text-left text-xs">
+        <div id="step1" class="flex items-center text-purple-400">
+          <i data-lucide="check-circle-2" class="w-4 h-4 mr-2"></i>
+          <span>Retrieving metadata & transcript</span>
+        </div>
+        <div id="step2" class="flex items-center text-slate-500">
+          <i data-lucide="circle" class="w-4 h-4 mr-2"></i>
+          <span>Calculating hook strength & virality scores</span>
+        </div>
+        <div id="step3" class="flex items-center text-slate-500">
+          <i data-lucide="circle" class="w-4 h-4 mr-2"></i>
+          <span>Generating YouTube Shorts Upload Kit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section (3-Column Klap Dashboard) -->
+    <div id="resultsSection" class="hidden">
+
+      <!-- Video Header Banner -->
+      <div id="videoHeaderCard" class="mb-6 p-4 rounded-xl bg-[#101623] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <img id="videoThumb" src="" alt="Thumbnail" class="w-24 h-14 object-cover rounded-lg border border-slate-700 flex-shrink-0">
+          <div>
+            <h2 id="videoTitle" class="text-sm sm:text-base font-bold text-white line-clamp-1">Original Video Title</h2>
+            <div class="flex items-center space-x-3 text-xs text-slate-400 mt-1">
+              <span id="videoChannel" class="flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1"></i> Channel</span>
+              <span id="videoDuration" class="flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1"></i> 12:34</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20 flex items-center">
+            <i data-lucide="flame" class="w-3.5 h-3.5 mr-1 text-emerald-400"></i>
+            <span id="clipsFoundCount">4 Viral Clips Ready</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- 3-Column Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Column 1: Clip Selector List (4 cols) -->
+        <div class="lg:col-span-4 space-y-3">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+              <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5 text-purple-400"></i>
+              Extracted Viral Clips
+            </h3>
+            <span class="text-[11px] text-slate-500">Sorted by Virality</span>
+          </div>
+
+          <div id="clipsListContainer" class="space-y-3">
+            <!-- Dynamic Clip Cards will be injected here -->
+          </div>
+        </div>
+
+        <!-- Column 2: 9:16 Shorts Mobile Player (4 cols) -->
+        <div class="lg:col-span-4 flex flex-col items-center">
+          <div class="w-full max-w-[340px]">
+            <!-- Phone Mockup Frame -->
+            <div class="relative rounded-[40px] p-3 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 shadow-2xl border-4 border-slate-700/60">
+              <!-- Notch / Speaker -->
+              <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-900 rounded-full z-20 flex items-center justify-center">
+                <div class="w-3 h-3 rounded-full bg-slate-800 mr-2"></div>
+                <div class="w-8 h-1.5 rounded-full bg-slate-800"></div>
+              </div>
+
+              <!-- Phone Screen Aspect Ratio 9:16 -->
+              <div class="relative w-full aspect-[9/16] bg-black rounded-[30px] overflow-hidden group">
+                <!-- Video Element -->
+                <video id="shortsPlayer" class="w-full h-full object-cover" loop playsinline></video>
+
+                <!-- Subtitle Live Overlay -->
+                <div id="subtitleOverlay" class="absolute bottom-28 left-4 right-4 text-center pointer-events-none transition duration-150">
+                  <span id="subtitleText" class="inline-block px-3 py-1.5 font-heading font-black text-lg uppercase tracking-wide text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] border-stroke">
+                    PASTE A LINK TO PREVIEW
+                  </span>
+                </div>
+
+                <!-- Shorts Interactive Overlay Mockup -->
+                <div class="absolute bottom-6 right-3 flex flex-col items-center space-y-4 text-white z-10">
+                  <div class="flex flex-col items-center">
+                    <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition">
+                      <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                    </button>
+                    <span class="text-[10px] font-semibold mt-1">98.4K</span>
+                  </div>
+                  <div class="flex flex-col items-center">
+                    <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition">
+                      <i data-lucide="message-square" class="w-5 h-5"></i>
+                    </button>
+                    <span class="text-[10px] font-semibold mt-1">1.2K</span>
+                  </div>
+                  <div class="flex flex-col items-center">
+                    <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition">
+                      <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+                    <span class="text-[10px] font-semibold mt-1">Share</span>
+                  </div>
+                </div>
+
+                <!-- Play/Pause Big Center Overlay -->
+                <div id="playPauseOverlay" onclick="togglePlay()" class="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer group-hover:opacity-100 transition">
+                  <div class="w-14 h-14 rounded-full bg-purple-600/80 backdrop-blur-md flex items-center justify-center text-white shadow-xl transform group-hover:scale-110 transition">
+                    <i data-lucide="play" id="playIcon" class="w-6 h-6 ml-1"></i>
+                  </div>
+                </div>
+
+                <!-- Rendering Overlay inside phone -->
+                <div id="renderingOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-30">
+                  <div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <span class="text-sm font-bold text-white mb-1">Rendering 9:16 Short</span>
+                  <span class="text-xs text-slate-400">Burning styled captions with FFmpeg...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Render / Download Action Button Under Player -->
+            <div class="mt-4 w-full space-y-2">
+              <button 
+                id="renderBtn" 
+                onclick="handleRenderClip()"
+                class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2 transition"
+              >
+                <i data-lucide="clapperboard" class="w-4 h-4"></i>
+                <span>Render 9:16 Video (MP4)</span>
+              </button>
+
+              <a 
+                id="directDownloadBtn" 
+                href="#" 
+                download
+                class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition text-center"
+              >
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Download Ready Short (1080x1920)</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: YouTube Shorts Upload Kit (4 cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="p-5 rounded-2xl bg-[#131926] border border-slate-800 shadow-xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center">
+                <i data-lucide="upload-cloud" class="w-4 h-4 mr-2 text-indigo-400"></i>
+                YouTube Shorts Upload Kit
+              </h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300">1-Click Copy</span>
+            </div>
+
+            <!-- Virality Scorecard -->
+            <div class="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-slate-300">Virality Index</span>
+                <span id="kitViralityScore" class="text-xs font-black px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">94%</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-[11px] mb-2">
+                <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                  <div class="text-slate-500">Hook</div>
+                  <div id="kitHookScore" class="font-bold text-emerald-400">9.5/10</div>
+                </div>
+                <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                  <div class="text-slate-500">Pacing</div>
+                  <div id="kitPacingScore" class="font-bold text-cyan-400">9.1/10</div>
+                </div>
+                <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                  <div class="text-slate-500">Retention</div>
+                  <div class="font-bold text-purple-400">Ultra High</div>
+                </div>
+              </div>
+              <p id="kitReason" class="text-[11px] text-slate-400 leading-relaxed italic">
+                "Explosive opening hook with high emotional curiosity."
+              </p>
+            </div>
+
+            <!-- Viral Title Selector -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-300 flex items-center">
+                  <i data-lucide="type" class="w-3.5 h-3.5 mr-1 text-purple-400"></i>
+                  High-CTR Title Options
+                </label>
+                <button onclick="copyCurrentTitle()" class="text-[11px] text-purple-400 hover:text-purple-300 flex items-center">
+                  <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy
+                </button>
+              </div>
+              <div id="titleOptionsContainer" class="space-y-1.5">
+                <!-- Titles populated dynamically -->
+              </div>
+            </div>
+
+            <!-- YouTube Shorts Description -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-300 flex items-center">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 mr-1 text-indigo-400"></i>
+                  Shorts Description & Hashtags
+                </label>
+                <button onclick="copyText('kitDescription', 'Description copied!')" class="text-[11px] text-purple-400 hover:text-purple-300 flex items-center">
+                  <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy
+                </button>
+              </div>
+              <textarea 
+                id="kitDescription" 
+                rows="4" 
+                readonly
+                class="w-full bg-[#0E1420] border border-slate-800 rounded-xl p-2.5 text-slate-300 text-xs focus:outline-none focus:border-purple-500 resize-none font-mono"
+              ></textarea>
+            </div>
+
+            <!-- YouTube Studio SEO Tags -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-300 flex items-center">
+                  <i data-lucide="tags" class="w-3.5 h-3.5 mr-1 text-cyan-400"></i>
+                  SEO Studio Tags (Ready to paste)
+                </label>
+                <button onclick="copyText('kitTags', 'Tags copied!')" class="text-[11px] text-purple-400 hover:text-purple-300 flex items-center">
+                  <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy All
+                </button>
+              </div>
+              <input 
+                id="kitTags" 
+                type="text" 
+                readonly
+                class="w-full bg-[#0E1420] border border-slate-800 rounded-xl px-2.5 py-2 text-slate-300 text-xs focus:outline-none focus:border-purple-500 font-mono"
+              />
+            </div>
+
+            <!-- Recommended Thumbnail Timestamp -->
+            <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-slate-300">Thumbnail Keyframe:</span>
+              </div>
+              <span id="kitKeyframeTime" class="font-bold text-purple-300 font-mono">1.8s</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-purple-500/40 text-white text-xs font-medium shadow-2xl">
+    <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMsg">Copied to clipboard!</span>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
