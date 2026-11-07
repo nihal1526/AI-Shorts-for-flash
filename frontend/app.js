@@ -155,8 +155,11 @@ function displayResults(data) {
   // Render Clips List
   renderClipsList();
 
-  // Select First Clip by Default
+  // Select First Clip by Default and Auto-Render
   selectClip(0);
+  setTimeout(() => {
+    handleRenderClip();
+  }, 400);
 
   lucide.createIcons();
 }
@@ -250,6 +253,26 @@ function selectClip(index) {
   document.getElementById('directDownloadBtn').classList.add('hidden');
   document.getElementById('renderBtn').classList.remove('hidden');
 
+  // Load and play clip video in 9:16 phone screen immediately
+  const iframe = document.getElementById('youtubePreviewFrame');
+  const player = document.getElementById('shortsPlayer');
+  let videoId = currentVideoInfo ? (currentVideoInfo.id || '') : '';
+  if (!videoId) {
+    const rawUrl = document.getElementById('youtubeUrlInput').value;
+    const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    if (match) videoId = match[1];
+  }
+  if (!videoId) videoId = 'jNQXAC9IVRw';
+
+  const startSec = Math.floor(clip.start_time || 0);
+  const endSec = Math.ceil(clip.end_time || (startSec + 30));
+
+  if (iframe) {
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&start=${startSec}&end=${endSec}&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1`;
+    iframe.classList.remove('hidden');
+    if (player) player.classList.add('hidden');
+  }
+
   // Preview Subtitles Animation
   startSubtitleSimulation(clip);
 }
@@ -334,8 +357,13 @@ async function handleRenderClip() {
 
     // Load into phone player
     const player = document.getElementById('shortsPlayer');
-    player.src = data.video_url;
-    player.play();
+    const iframe = document.getElementById('youtubePreviewFrame');
+    if (iframe) iframe.classList.add('hidden');
+    if (player) {
+      player.src = data.video_url;
+      player.classList.remove('hidden');
+      player.play();
+    }
     document.getElementById('playPauseOverlay').classList.add('opacity-0');
 
     // Update Download Button
@@ -345,8 +373,39 @@ async function handleRenderClip() {
 
     showToast('🎉 9:16 Short Rendered Successfully!');
   } catch (error) {
-    console.error('Render error:', error);
-    alert('Rendering completed or local processing message: ' + error.message);
+    console.warn('Local render unavailable, trying Apify cloud download:', error);
+    const videoUrl = document.getElementById('youtubeUrlInput').value.trim();
+    const token = localStorage.getItem('apify_token') || '';
+    try {
+      showToast('☁️ Fetching video via Apify cloud...');
+      const apifyApiUrl = `https://api.apify.com/v2/acts/streamers~youtube-video-downloader/run-sync-get-dataset-items?token=${token}`;
+      const apifyResp = await fetch(apifyApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videos: [{ url: videoUrl }] })
+      });
+      if (apifyResp.ok) {
+        const items = await apifyResp.json();
+        if (items && items.length > 0 && items[0].downloadedFileUrl) {
+          const dlUrl = items[0].downloadedFileUrl;
+          const player = document.getElementById('shortsPlayer');
+          const iframe = document.getElementById('youtubePreviewFrame');
+          if (iframe) iframe.classList.add('hidden');
+          if (player) {
+            player.src = dlUrl;
+            player.classList.remove('hidden');
+            player.play();
+          }
+          directDownloadBtn.href = dlUrl;
+          directDownloadBtn.classList.remove('hidden');
+          renderBtn.classList.add('hidden');
+          showToast('🎉 High-Resolution MP4 Ready to Download!');
+          return;
+        }
+      }
+    } catch (apifyErr) {
+      console.warn('Apify client fallback error:', apifyErr);
+    }
   } finally {
     renderingOverlay.classList.add('hidden');
     renderBtn.disabled = false;

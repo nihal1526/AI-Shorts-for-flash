@@ -207,8 +207,9 @@
 
               <!-- Phone Screen Aspect Ratio 9:16 -->
               <div class="relative w-full aspect-[9/16] bg-black rounded-[30px] overflow-hidden group">
-                <!-- Video Element -->
-                <video id="shortsPlayer" class="w-full h-full object-cover" loop playsinline></video>
+                <!-- Live Clip Video Player (Iframe Preview + High-Res MP4 Player) -->
+                <iframe id="youtubePreviewFrame" class="w-full h-full object-cover scale-[1.35] origin-center" allow="autoplay; encrypted-media" frameborder="0"></iframe>
+                <video id="shortsPlayer" class="w-full h-full object-cover hidden" loop playsinline></video>
 
                 <!-- Subtitle Live Overlay -->
                 <div id="subtitleOverlay" class="absolute bottom-28 left-4 right-4 text-center pointer-events-none transition duration-150">
