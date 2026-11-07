@@ -92,11 +92,11 @@ def calculate_clip_virality(clip_text: str, duration: float, opening_hook_score:
 
 def find_viral_clips(
     segments: List[Dict[str, Any]], 
-    min_duration: float = 25.0, 
+    min_duration: float = 20.0, 
     max_duration: float = 58.0, 
-    target_count: int = 4
+    target_count: int = 6
 ) -> List[Dict[str, Any]]:
-    """Scan transcript segments and extract the most viral standalone clip candidates."""
+    """Scan transcript segments and extract multiple viral standalone clip candidates (default 6)."""
     if not segments:
         return []
 

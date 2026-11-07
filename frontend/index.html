@@ -205,11 +205,18 @@
                 <div class="w-8 h-1.5 rounded-full bg-slate-800"></div>
               </div>
 
-              <!-- Phone Screen Aspect Ratio 9:16 -->
+              <!-- Phone Screen Aspect Ratio 9:16 Full Screen -->
               <div class="relative w-full aspect-[9/16] bg-black rounded-[30px] overflow-hidden group">
-                <!-- Live Clip Video Player (Iframe Preview + High-Res MP4 Player) -->
-                <iframe id="youtubePreviewFrame" class="w-full h-full object-cover scale-[1.35] origin-center" allow="autoplay; encrypted-media" frameborder="0"></iframe>
-                <video id="shortsPlayer" class="w-full h-full object-cover hidden" loop playsinline></video>
+                <!-- Full-Screen 9:16 Video Stage (Zero Black Bars) -->
+                <div class="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center">
+                  <iframe id="youtubePreviewFrame" 
+                    class="absolute pointer-events-none" 
+                    style="width: 325%; height: 100%; min-width: 325%; max-width: none; left: 50%; transform: translateX(-50%); object-fit: cover;" 
+                    allow="autoplay; encrypted-media" 
+                    frameborder="0">
+                  </iframe>
+                  <video id="shortsPlayer" class="w-full h-full object-cover hidden" loop playsinline></video>
+                </div>
 
                 <!-- Subtitle Live Overlay -->
                 <div id="subtitleOverlay" class="absolute bottom-28 left-4 right-4 text-center pointer-events-none transition duration-150">

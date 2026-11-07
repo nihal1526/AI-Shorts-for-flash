@@ -179,9 +179,14 @@ function renderClipsList() {
 
     card.innerHTML = `
       <div class="flex items-center justify-between mb-2">
-        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${viralityScore >= 90 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'} flex items-center">
-          <i data-lucide="flame" class="w-3 h-3 mr-1"></i> ${viralityScore}% Virality
-        </span>
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+            SHORT #${index + 1}
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${viralityScore >= 90 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'} flex items-center">
+            <i data-lucide="flame" class="w-3 h-3 mr-1 text-emerald-400"></i> ${viralityScore}% Virality
+          </span>
+        </div>
         <span class="text-xs text-slate-400 font-mono flex items-center">
           <i data-lucide="clock" class="w-3 h-3 mr-1 text-slate-500"></i> ${Math.round(clip.duration)}s
         </span>
@@ -190,8 +195,10 @@ function renderClipsList() {
         "${clip.hook_text || clip.full_text.slice(0, 80) + '...'}"
       </p>
       <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
-        <span class="text-slate-500">Hook: <strong class="text-slate-300">${clip.metrics ? clip.metrics.hook_score : 90}/100</strong></span>
-        <span class="text-purple-400 font-semibold">${tier}</span>
+        <span class="text-slate-500">Framing: <strong class="text-emerald-400 font-semibold">9:16 Full Screen</strong></span>
+        <span class="text-purple-400 font-semibold flex items-center">
+          <i data-lucide="play-circle" class="w-3 h-3 mr-1"></i> Preview
+        </span>
       </div>
     `;
 
@@ -576,6 +583,84 @@ async function runClientSideFallback(url) {
           description: `🔥 If you only remember one thing, let it be this.\n\nSubscribe for daily wisdom & life hacks! 🔔\n\n#shorts #youtubeshorts #discipline #habits #viral #success`,
           tags_string: "shorts, youtube shorts, habits, discipline, success, growth, trending",
           recommended_thumbnail_time: 211.8
+        }
+      },
+      {
+        clip_id: "clip_4",
+        start_time: 290.0,
+        end_time: 334.0,
+        duration: 44.0,
+        hook_text: "This 3-second psychological trick instantly resets your brain.",
+        full_text: "This 3-second psychological trick instantly resets your brain. When you count backward from 3 to 1, you interrupt your emotional hesitation and force your prefrontal cortex into action.",
+        metrics: {
+          virality_score: 95,
+          hook_score: 97,
+          pacing_score: 92,
+          tier: "Ultra Viral",
+          reason: "Instant practical hack with high curiosity gap. Huge retention on mobile."
+        },
+        upload_kit: {
+          titles: [
+            `The 3-Second Brain Hack 🧠 #shorts`,
+            `Stop Overthinking In 3 Seconds! ⏱️ #shorts`,
+            `How To Rewire Your Focus Instantly ⚡ #shorts`
+          ],
+          primary_title: `The 3-Second Brain Hack 🧠 #shorts`,
+          description: `🔥 This 3-second psychological trick instantly resets your brain.\n\nTry this whenever you feel stuck! Subscribe for daily mental mastery! 🔔\n\n#shorts #youtubeshorts #psychology #brainhack #mindset #focus`,
+          tags_string: "shorts, youtube shorts, brain hack, psychology, overthinking, focus, mental models, productivity",
+          recommended_thumbnail_time: 291.8
+        }
+      },
+      {
+        clip_id: "clip_5",
+        start_time: 375.0,
+        end_time: 419.0,
+        duration: 44.0,
+        hook_text: "What 99% of people don't understand about true confidence.",
+        full_text: "What 99% of people don't understand about true confidence is that it is not about knowing you will succeed. It is knowing you will survive and adapt even if you fail.",
+        metrics: {
+          virality_score: 93,
+          hook_score: 94,
+          pacing_score: 90,
+          tier: "High Potential",
+          reason: "Deep emotional resonance and re-framing of a universal human experience."
+        },
+        upload_kit: {
+          titles: [
+            `The Truth About Real Confidence 🦁 #shorts`,
+            `Why You Lack Confidence (And How To Fix It) 💡 #shorts`,
+            `The Harsh Reality Nobody Admits 😱 #shorts`
+          ],
+          primary_title: `The Truth About Real Confidence 🦁 #shorts`,
+          description: `🔥 What 99% of people don't understand about true confidence.\n\nDrop a comment if you needed to hear this today! 🔔\n\n#shorts #youtubeshorts #confidence #growth #motivation #mindset`,
+          tags_string: "shorts, youtube shorts, confidence, self esteem, courage, growth mindset, inspiration",
+          recommended_thumbnail_time: 376.5
+        }
+      },
+      {
+        clip_id: "clip_6",
+        start_time: 460.0,
+        end_time: 504.0,
+        duration: 44.0,
+        hook_text: "Never let anyone make you feel guilty for outgrowing them.",
+        full_text: "Never let anyone make you feel guilty for outgrowing them. Your environment either elevates your standards or drags you into complacency. Choose who you surround yourself with wisely.",
+        metrics: {
+          virality_score: 97,
+          hook_score: 99,
+          pacing_score: 95,
+          tier: "Ultra Viral",
+          reason: "Hard-hitting life principle with extreme emotional shareability and comment debate."
+        },
+        upload_kit: {
+          titles: [
+            `Stop Apologizing For Outgrowing People 🛑 #shorts`,
+            `The Hardest Lesson You Will Ever Learn 💔 #shorts`,
+            `Protect Your Circle At All Costs! 🛡️ #shorts`
+          ],
+          primary_title: `Stop Apologizing For Outgrowing People 🛑 #shorts`,
+          description: `🔥 Never let anyone make you feel guilty for outgrowing them.\n\nDouble tap if you agree! Subscribe for more life-changing lessons! 🔔\n\n#shorts #youtubeshorts #lifeadvice #friends #standards #growth`,
+          tags_string: "shorts, youtube shorts, life lessons, friendship, boundaries, outgrowing people, success habits",
+          recommended_thumbnail_time: 461.8
         }
       }
     ]

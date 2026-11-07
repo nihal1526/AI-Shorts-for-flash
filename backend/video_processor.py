@@ -111,8 +111,8 @@ def render_vertical_short(
             # Dynamic speaker-centered crop scaled to crisp 1080x1920 HD
             filter_graph = f"crop={crop_w}:{h}:{crop_x}:0,scale=1080:1920:flags=lanczos"
         else:
-            # Geometric center fallback
-            filter_graph = "scale=-2:1920:flags=lanczos,crop=1080:1920:(in_w-1080)/2:0"
+            # Full-bleed 9:16 center crop filling the entire 1080x1920 screen with zero black bars
+            filter_graph = "crop=ih*(9/16):ih:(iw-ow)/2:0,scale=1080:1920:flags=lanczos"
 
     elif layout_mode == "letterbox":
         filter_graph = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black"

@@ -40,7 +40,7 @@ JOBS: Dict[str, Dict[str, Any]] = {}
 
 class AnalyzeRequest(BaseModel):
     url: str
-    max_clips: Optional[int] = 4
+    max_clips: Optional[int] = 6
     min_duration: Optional[int] = 25
     max_duration: Optional[int] = 58
     api_key: Optional[str] = None
