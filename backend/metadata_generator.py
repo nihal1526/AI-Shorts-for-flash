@@ -2,8 +2,11 @@ import os
 import re
 import json
 import random
+import time
 from typing import Dict, Any, List, Optional
 from backend.config import GEMINI_API_KEY
+
+_GEMINI_DISABLED_UNTIL = 0
 
 TRENDING_HASHTAGS = [
     "#shorts", "#youtubeshorts", "#viral", "#trending", 
@@ -24,6 +27,10 @@ def generate_with_gemini(
     gemini_key: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """Generate high-CTR YouTube Shorts metadata using Google Gemini AI."""
+    global _GEMINI_DISABLED_UNTIL
+    if time.time() < _GEMINI_DISABLED_UNTIL:
+        return None
+
     key = (gemini_key or GEMINI_API_KEY or "").strip()
     if not key:
         return None
@@ -43,7 +50,7 @@ Generate:
 
 Return ONLY valid JSON with keys "titles", "description", "tags".
 """
-        for model_name in ['gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.8-flash', 'gemini-flash-latest']:
+        for model_name in ['gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.8-flash']:
             try:
                 res = client.models.generate_content(model=model_name, contents=prompt)
                 raw_text = res.text.strip()
@@ -57,6 +64,12 @@ Return ONLY valid JSON with keys "titles", "description", "tags".
                     print(f"[Gemini] Successfully generated metadata with {model_name}")
                     return data
             except Exception as model_err:
+                err_str = str(model_err).lower()
+                # If network connection failure, socket timeout or credential error, do not stall
+                if any(k in err_str for k in ["connect", "network", "proxy", "socket", "winerror", "unauthorized", "invalid", "timed out", "permission"]):
+                    print(f"[Gemini] Network/Auth notice ({model_name}): {model_err}. Falling back to instant rule engine.")
+                    _GEMINI_DISABLED_UNTIL = time.time() + 60
+                    break
                 continue
 
     except Exception as e:

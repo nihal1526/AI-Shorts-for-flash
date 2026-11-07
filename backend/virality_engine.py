@@ -170,6 +170,7 @@ def find_viral_clips(
             
             metrics = calculate_clip_virality(text or "Highlights clip", end - cur, 75.0)
             fallback_clips.append({
+                "clip_id": f"clip_{len(fallback_clips) + 1}",
                 "start_time": round(cur, 2),
                 "end_time": round(end, 2),
                 "duration": round(end - cur, 1),

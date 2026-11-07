@@ -155,11 +155,8 @@ function displayResults(data) {
   // Render Clips List
   renderClipsList();
 
-  // Select First Clip by Default and Auto-Render
+  // Select First Clip by Default to play live 9:16 mobile preview
   selectClip(0);
-  setTimeout(() => {
-    handleRenderClip();
-  }, 400);
 
   lucide.createIcons();
 }
@@ -204,6 +201,16 @@ function renderClipsList() {
 
     container.appendChild(card);
   });
+}
+
+function extractVideoId(url) {
+  if (!url) return 'dQw4w9WgXcQ';
+  url = url.trim();
+  if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?.*v=|shorts\/|live\/))([\w-]{11})/);
+  if (match) return match[1];
+  const genericMatch = url.match(/([a-zA-Z0-9_-]{11})/);
+  return genericMatch ? genericMatch[1] : 'dQw4w9WgXcQ';
 }
 
 function selectClip(index) {
@@ -265,11 +272,9 @@ function selectClip(index) {
   const player = document.getElementById('shortsPlayer');
   let videoId = currentVideoInfo ? (currentVideoInfo.id || '') : '';
   if (!videoId) {
-    const rawUrl = document.getElementById('youtubeUrlInput').value;
-    const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-    if (match) videoId = match[1];
+    videoId = extractVideoId(document.getElementById('youtubeUrlInput').value);
   }
-  if (!videoId) videoId = 'jNQXAC9IVRw';
+  if (!videoId) videoId = 'dQw4w9WgXcQ';
 
   const startSec = Math.floor(clip.start_time || 0);
   const endSec = Math.ceil(clip.end_time || (startSec + 30));

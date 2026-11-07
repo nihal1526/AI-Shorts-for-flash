@@ -4,10 +4,12 @@ from backend.config import ASSEMBLYAI_API_KEY
 
 def format_srt_time(seconds: float) -> str:
     """Format seconds into standard SRT timestamp format: HH:MM:SS,mmm"""
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = seconds % 60
-    ms = int(round((seconds - int(seconds)) * 1000))
+    total_ms = int(round(max(0.0, float(seconds)) * 1000))
+    ms = total_ms % 1000
+    total_sec = total_ms // 1000
+    s = total_sec % 60
+    m = (total_sec // 60) % 60
+    h = total_sec // 3600
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 def generate_srt_from_segments(segments: List[Dict[str, Any]], clip_start: float = 0.0) -> str:
