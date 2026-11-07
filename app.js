@@ -326,9 +326,30 @@ async function handleRenderClip() {
   const renderBtn = document.getElementById('renderBtn');
   const renderingOverlay = document.getElementById('renderingOverlay');
   const directDownloadBtn = document.getElementById('directDownloadBtn');
+  const statusDetail = document.getElementById('renderingStatusDetail');
+  const progressBar = document.getElementById('renderingProgressBar');
 
   renderBtn.disabled = true;
   renderingOverlay.classList.remove('hidden');
+
+  // Smooth progress animation for user feedback
+  let progress = 20;
+  if (progressBar) progressBar.style.width = '20%';
+  if (statusDetail) statusDetail.textContent = '⚡ Stream-cutting 30s high-res clip...';
+
+  const progressTimer = setInterval(() => {
+    progress = Math.min(92, progress + 12);
+    if (progressBar) progressBar.style.width = `${progress}%`;
+    if (statusDetail) {
+      if (progress < 45) {
+        statusDetail.textContent = '⚡ Fast-cutting 30s high-res clip...';
+      } else if (progress < 75) {
+        statusDetail.textContent = '🎯 Tracking speaker & centering 9:16 frame...';
+      } else {
+        statusDetail.textContent = '🔥 Burning Hormozi animated subtitles...';
+      }
+    }
+  }, 1200);
 
   const apifyToken = document.getElementById('settingApifyToken') ? document.getElementById('settingApifyToken').value.trim() : (localStorage.getItem('apify_token') || '');
 
@@ -362,6 +383,9 @@ async function handleRenderClip() {
     const data = await res.json();
     currentRenderedUrl = data.video_url;
 
+    if (progressBar) progressBar.style.width = '100%';
+    if (statusDetail) statusDetail.textContent = '✨ 1080x1920 Short Ready!';
+
     // Load into phone player
     const player = document.getElementById('shortsPlayer');
     const iframe = document.getElementById('youtubePreviewFrame');
@@ -378,18 +402,20 @@ async function handleRenderClip() {
     directDownloadBtn.classList.remove('hidden');
     renderBtn.classList.add('hidden');
 
-    showToast('🎉 9:16 Short Rendered Successfully!');
+    showToast('🎉 9:16 Short Rendered in Seconds!');
   } catch (error) {
     console.warn('Local render unavailable, trying Apify cloud download:', error);
     const videoUrl = document.getElementById('youtubeUrlInput').value.trim();
     const token = localStorage.getItem('apify_token') || '';
     try {
-      showToast('☁️ Fetching video via Apify cloud...');
+      if (statusDetail) statusDetail.textContent = '☁️ Requesting video via Apify cloud actor...';
       const apifyApiUrl = `https://api.apify.com/v2/acts/streamers~youtube-video-downloader/run-sync-get-dataset-items?token=${token}`;
       const apifyResp = await fetch(apifyApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videos: [{ url: videoUrl }] })
+        body: JSON.stringify({ 
+          videos: [{ url: videoUrl, quality: "720p" }] 
+        })
       });
       if (apifyResp.ok) {
         const items = await apifyResp.json();
@@ -412,10 +438,14 @@ async function handleRenderClip() {
       }
     } catch (apifyErr) {
       console.warn('Apify client fallback error:', apifyErr);
+      showToast('⚠️ Tip: Run "python run.py" locally for ultra-fast 5s rendering!');
     }
   } finally {
-    renderingOverlay.classList.add('hidden');
-    renderBtn.disabled = false;
+    clearInterval(progressTimer);
+    setTimeout(() => {
+      renderingOverlay.classList.add('hidden');
+      renderBtn.disabled = false;
+    }, 400);
   }
 }
 

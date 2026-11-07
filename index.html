@@ -262,10 +262,19 @@
                 </div>
 
                 <!-- Rendering Overlay inside phone -->
-                <div id="renderingOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-30">
-                  <div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <span class="text-sm font-bold text-white mb-1">Rendering 9:16 Short</span>
-                  <span class="text-xs text-slate-400">Burning styled captions with FFmpeg...</span>
+                <div id="renderingOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
+                  <div class="relative w-12 h-12 mb-3">
+                    <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-2 rounded-full bg-purple-500/10 flex items-center justify-center">
+                      <i data-lucide="zap" class="w-4 h-4 text-purple-400 animate-pulse"></i>
+                    </div>
+                  </div>
+                  <span id="renderingStatusTitle" class="text-sm font-bold text-white mb-1">Fast Rendering 9:16 Short</span>
+                  <span id="renderingStatusDetail" class="text-xs text-purple-300">⚡ Slicing 30s HD clip & burning animated subtitles...</span>
+                  <div class="w-44 bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
+                    <div id="renderingProgressBar" class="bg-gradient-to-r from-purple-500 to-cyan-400 h-1.5 rounded-full transition-all duration-300" style="width: 25%"></div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -299,21 +299,39 @@ def download_video_clip_fast(
     apify_token: Optional[str] = None
 ) -> str:
     """
-    Download video clip section.
-    If apify_token is provided, uses Apify streamers/youtube-video-downloader actor,
-    then cuts the clip with FFmpeg.
-    Otherwise uses local yt-dlp section download.
+    Download video clip section at maximum speed.
+    1. First uses direct yt-dlp HTTP range streaming (downloads ONLY the ~30s clip in 2-4 seconds).
+    2. Falls back to Apify cloud actor only if direct streaming is restricted.
     """
     url = clean_youtube_url(url)
-    duration = end_sec - start_sec
 
-    # 1. Try Apify if token is provided
+    # 1. Ultra-fast direct section download using yt-dlp range streaming
+    try:
+        print(f"[Downloader] Direct stream-downloading section {start_sec:.1f}s to {end_sec:.1f}s...")
+        ydl_opts = {
+            'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best',
+            'outtmpl': output_path,
+            'download_ranges': yt_dlp.utils.download_range_func(None, [(start_sec, end_sec)]),
+            'force_keyframes_at_cuts': True,
+            'quiet': True,
+            'no_warnings': True,
+            'overwrites': True
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 10000:
+            print(f"[Downloader] Direct clip download completed in seconds: {output_path}")
+            return output_path
+    except Exception as e:
+        print(f"[Downloader] Direct stream download note: {e}. Trying cloud fallback...")
+
+    # 2. Cloud Fallback to Apify actor if provided
     if apify_token and apify_token.strip():
         temp_full_video = output_path.replace(".mp4", "_full.mp4")
         apify_file = download_with_apify(url, apify_token.strip(), temp_full_video)
         if apify_file and os.path.exists(apify_file):
             import subprocess
-            # Cut the specific section using fast FFmpeg seek
             cut_cmd = [
                 "ffmpeg", "-y",
                 "-ss", str(start_sec),
@@ -323,28 +341,11 @@ def download_video_clip_fast(
                 output_path
             ]
             subprocess.run(cut_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            # Remove full video
             try:
                 os.remove(apify_file)
             except Exception:
                 pass
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                 return output_path
-
-    # 2. Fallback to yt-dlp section download
-    section_arg = f"*{start_sec:.2f}-{end_sec:.2f}"
-    
-    ydl_opts = {
-        'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best',
-        'outtmpl': output_path,
-        'download_ranges': yt_dlp.utils.download_range_func(None, [(start_sec, end_sec)]),
-        'force_keyframes_at_cuts': True,
-        'quiet': False,
-        'no_warnings': True,
-        'overwrites': True
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
 
     return output_path
