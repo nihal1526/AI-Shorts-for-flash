@@ -83,12 +83,14 @@ async function handleGenerate() {
 
   const aaiKey = document.getElementById('settingAssemblyAiKey') ? document.getElementById('settingAssemblyAiKey').value.trim() : (localStorage.getItem('assemblyai_key') || '');
   const apifyTok = document.getElementById('settingApifyToken') ? document.getElementById('settingApifyToken').value.trim() : (localStorage.getItem('apify_token') || '');
+  const geminiK = document.getElementById('settingGeminiKey') ? document.getElementById('settingGeminiKey').value.trim() : (localStorage.getItem('gemini_key') || '');
 
   const payload = {
     url: url,
-    max_clips: parseInt(document.getElementById('settingMaxClips').value) || 4,
+    max_clips: (document.getElementById('settingMaxClips') ? parseInt(document.getElementById('settingMaxClips').value) : 4) || 4,
     min_duration: 25,
     max_duration: 58,
+    api_key: geminiK,
     assemblyai_key: aaiKey,
     apify_token: apifyTok
   };
@@ -309,8 +311,8 @@ async function handleRenderClip() {
     full_text: clip.full_text,
     words: clip.words || [],
     segments: clip.segments || [],
-    layout_mode: document.getElementById('settingLayout').value,
-    subtitle_style: document.getElementById('settingSubtitle').value,
+    layout_mode: (document.getElementById('settingLayout') ? document.getElementById('settingLayout').value : 'face_tracking') || 'face_tracking',
+    subtitle_style: (document.getElementById('settingSubtitle') ? document.getElementById('settingSubtitle').value : 'hormozi') || 'hormozi',
     uppercase: true,
     apify_token: apifyToken
   };
@@ -390,6 +392,49 @@ async function runClientSideFallback(url) {
   // Generate tailored shorts metadata based on the real video
   const cleanTitle = realTitle.replace(/[^\w\s]/gi, '').slice(0, 45);
 
+  let geminiTitles = null;
+  let geminiDesc = null;
+  let geminiTags = null;
+  const activeGeminiKey = localStorage.getItem('gemini_key') || '';
+
+  if (activeGeminiKey) {
+    try {
+      const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeGeminiKey}`;
+      const gResp = await fetch(geminiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `Generate 3 viral YouTube Shorts titles (under 60 chars with emojis and #shorts), 1 engaging shorts description with hashtags, and 15 comma-separated YouTube Studio SEO tags for the video titled "${realTitle}" by "${realAuthor}". Return strict JSON: {"titles": [], "description": "", "tags": ""}` }]
+          }]
+        })
+      });
+      if (gResp.ok) {
+        const gData = await gResp.json();
+        const raw = gData.candidates[0].content.parts[0].text;
+        const cleanJson = raw.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+        if (parsed.titles && parsed.description) {
+          geminiTitles = parsed.titles;
+          geminiDesc = parsed.description;
+          geminiTags = parsed.tags;
+        }
+      }
+    } catch (err) {
+      console.log('Client Gemini call note:', err);
+    }
+  }
+
+  const defaultTitles = [
+    `The 1 Mistake In ${cleanTitle.slice(0, 28)} 😱 #shorts`,
+    `Nobody Talks About This Secret! 🚨 #shorts`,
+    `The Harsh Truth That Changes Everything 🧠 #shorts`
+  ];
+
+  const defaultDesc = `🔥 The biggest mistake 99% of people make regarding ${cleanTitle}!\n\nWatch till the end for the shocking realization!\n👉 Subscribe for more daily viral clips & insights! 🔔\n\n🎬 Original: ${realTitle}\n🎙️ Creator: ${realAuthor}\n\n#shorts #youtubeshorts #viral #trending #podcast #foryou #clips`;
+
+  const defaultTags = `shorts, youtube shorts, ${cleanTitle.toLowerCase().split(' ').slice(0, 5).join(', ')}, viral, motivation, podcast clips, trending shorts`;
+
   const mockData = {
     video_info: {
       id: videoId,
@@ -415,14 +460,10 @@ async function runClientSideFallback(url) {
           reason: "Explosive curiosity opening with immediate pattern-interrupt. High retention guarantee."
         },
         upload_kit: {
-          titles: [
-            `The 1 Mistake In ${cleanTitle.slice(0, 28)} 😱 #shorts`,
-            `Nobody Talks About This Secret! 🚨 #shorts`,
-            `The Harsh Truth That Changes Everything 🧠 #shorts`
-          ],
-          primary_title: `The 1 Mistake In ${cleanTitle.slice(0, 28)} 😱 #shorts`,
-          description: `🔥 The biggest mistake 99% of people make regarding ${cleanTitle}!\n\nWatch till the end for the shocking realization!\n👉 Subscribe for more daily viral clips & insights! 🔔\n\n🎬 Original: ${realTitle}\n🎙️ Creator: ${realAuthor}\n\n#shorts #youtubeshorts #viral #trending #podcast #foryou #clips`,
-          tags_string: `shorts, youtube shorts, ${cleanTitle.toLowerCase().split(' ').slice(0, 5).join(', ')}, viral, motivation, podcast clips, trending shorts`,
+          titles: geminiTitles || defaultTitles,
+          primary_title: (geminiTitles && geminiTitles[0]) ? geminiTitles[0] : defaultTitles[0],
+          description: geminiDesc || defaultDesc,
+          tags_string: geminiTags || defaultTags,
           recommended_thumbnail_time: 25.8
         }
       },

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from backend.config import (
     FRONTEND_DIR, DOWNLOADS_DIR, RENDERED_DIR, TEMP_DIR, 
-    SUBTITLE_PRESETS, APIFY_API_TOKEN, ASSEMBLYAI_API_KEY
+    SUBTITLE_PRESETS, APIFY_API_TOKEN, ASSEMBLYAI_API_KEY, GEMINI_API_KEY
 )
 from backend.youtube_downloader import (
     get_video_info, get_transcript, download_video_clip_fast, clean_youtube_url
@@ -112,10 +112,10 @@ async def analyze_video(req: AnalyzeRequest):
         target_count=req.max_clips or 4
     )
 
-    # Step 4: Generate YouTube Shorts Upload Kit for each clip
+    # Step 4: Generate YouTube Shorts Upload Kit for each clip (via Gemini AI)
     enriched_clips = []
     for c in clips:
-        upload_kit = generate_shorts_metadata(c, video_info)
+        upload_kit = generate_shorts_metadata(c, video_info, gemini_key=req.api_key or GEMINI_API_KEY)
         c["upload_kit"] = upload_kit
         enriched_clips.append(c)
 

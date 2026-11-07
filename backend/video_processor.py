@@ -1,43 +1,123 @@
 import os
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from backend.config import TEMP_DIR, RENDERED_DIR
 from backend.subtitle_generator import generate_ass_subtitles
 
 def escape_ffmpeg_path(path_str: str) -> str:
     """Escape file path for FFmpeg filter argument on Windows."""
-    # FFmpeg requires forward slashes and escaped colons in filter graph paths
     clean = str(Path(path_str).resolve()).replace('\\', '/')
     clean = clean.replace(':', r'\:')
     return clean
 
+def detect_speaker_x_offset(video_path: str) -> Tuple[int, int, int]:
+    """
+    Analyze video frames with OpenCV to detect the speaker's face/body center
+    and calculate optimal 9:16 crop offset.
+    Returns: (crop_x, crop_width, height)
+    """
+    try:
+        import cv2
+        import numpy as np
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            return 0, 0, 0
+
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        if width <= 0 or height <= 0:
+            cap.release()
+            return 0, 0, 0
+
+        # Target 9:16 crop width for input height
+        crop_w = int(height * (9.0 / 16.0))
+        if crop_w % 2 != 0:
+            crop_w -= 1
+
+        if crop_w >= width:
+            cap.release()
+            return 0, width, height
+
+        # Sample 15 frames uniformly
+        sample_indices = np.linspace(0, max(1, total_frames - 1), min(15, max(1, total_frames)), dtype=int)
+        detected_x_centers = []
+
+        for f_idx in sample_indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(f_idx))
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                continue
+
+            # Focus on upper half (where human faces and heads reside)
+            upper_half = frame[0:int(height * 0.65), :]
+
+            # Convert to HSV for skin-tone and human presence detection
+            hsv = cv2.cvtColor(upper_half, cv2.COLOR_BGR2HSV)
+            # Standard human skin tone range in HSV
+            lower_skin = np.array([0, 30, 60], dtype=np.uint8)
+            upper_skin = np.array([25, 255, 255], dtype=np.uint8)
+            mask = cv2.inRange(hsv, lower_skin, upper_skin)
+
+            # Find center of mass of the skin mask
+            moments = cv2.moments(mask)
+            if moments["m00"] > 500:
+                cx = int(moments["m10"] / moments["m00"])
+                detected_x_centers.append(cx)
+
+        cap.release()
+
+        if detected_x_centers:
+            # Use median speaker X coordinate to ignore outliers
+            median_x = int(np.median(detected_x_centers))
+            # Center the 9:16 box on speaker
+            target_x = median_x - (crop_w // 2)
+            # Clamp inside boundaries [0, width - crop_w]
+            clamped_x = max(0, min(width - crop_w, target_x))
+            if clamped_x % 2 != 0:
+                clamped_x -= 1
+            print(f"[FaceTracking] Detected speaker center X: {median_x} -> Crop X: {clamped_x} (Width: {crop_w}, Height: {height})")
+            return clamped_x, crop_w, height
+
+    except Exception as e:
+        print(f"[FaceTracking] Error during face tracking: {e}")
+
+    # Fallback to center
+    return -1, 0, 0
+
 def render_vertical_short(
     input_video_path: str,
     output_video_path: str,
-    layout_mode: str = "blur_fill",
+    layout_mode: str = "face_tracking",
     ass_subtitle_path: Optional[str] = None
 ) -> str:
     """
-    Render 9:16 vertical (1080x1920) YouTube Short using FFmpeg.
+    Render 1080x1920 High-Resolution 9:16 vertical YouTube Short using FFmpeg.
     Layout options:
+      - 'face_tracking' / 'smart_crop': Auto-centers on speaker's face using OpenCV detection
       - 'blur_fill': 16:9 video centered with aesthetically blurred background filling 9:16
-      - 'smart_crop': 9:16 centered crop filling entire screen
       - 'letterbox': Centered with black borders
     """
     input_path = str(Path(input_video_path).resolve())
     output_path = str(Path(output_video_path).resolve())
-    
+
     # 1. Base video filter graph for 9:16 framing
-    if layout_mode == "smart_crop":
-        # Scale to match height 1920, then crop width to 1080
-        filter_graph = "scale=-2:1920,crop=1080:1920:(in_w-1080)/2:0"
+    if layout_mode in ["face_tracking", "smart_crop"]:
+        crop_x, crop_w, h = detect_speaker_x_offset(input_path)
+        if crop_x >= 0 and crop_w > 0:
+            # Dynamic speaker-centered crop scaled to crisp 1080x1920 HD
+            filter_graph = f"crop={crop_w}:{h}:{crop_x}:0,scale=1080:1920:flags=lanczos"
+        else:
+            # Geometric center fallback
+            filter_graph = "scale=-2:1920:flags=lanczos,crop=1080:1920:(in_w-1080)/2:0"
+
     elif layout_mode == "letterbox":
-        # Fit inside 1080x1920 and pad with black
         filter_graph = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black"
+
     else: # Default: blur_fill
-        # Background: scaled and cropped to 1080x1920 with boxblur.
-        # Foreground: scaled to 1080 width preserving aspect ratio, centered.
         filter_graph = (
             "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=20:5[bg];"
             "[0:v]scale=1080:-2:force_original_aspect_ratio=decrease[fg];"
@@ -52,17 +132,17 @@ def render_vertical_short(
         else:
             filter_graph += f",ass='{escaped_ass}'"
 
-    # 3. Build FFmpeg command
+    # 3. High-Resolution 1080x1920 MP4 encoding parameters
     cmd = [
         "ffmpeg", "-y",
         "-i", input_path,
         "-filter_complex" if layout_mode == "blur_fill" else "-vf", filter_graph,
         "-c:v", "libx264",
-        "-preset", "veryfast",
-        "-crf", "22",
+        "-preset", "fast",
+        "-crf", "18",               # Crisp visually lossless high quality
         "-c:a", "aac",
-        "-b:a", "192k",
-        "-ar", "44100",
+        "-b:a", "256k",             # Crystal clear audio
+        "-ar", "48000",
         "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         output_path
@@ -70,7 +150,6 @@ def render_vertical_short(
 
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if result.returncode != 0:
-        # If ass filter had an issue (e.g. font missing), retry without subtitles
         if "ass" in filter_graph:
             simple_filter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
             fallback_cmd = [
@@ -99,4 +178,3 @@ def extract_thumbnail_frame(video_path: str, output_image_path: str, time_sec: f
     ]
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return output_image_path
-

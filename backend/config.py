@@ -30,6 +30,7 @@ HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", 8000))
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN", "")
 ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Subtitle styling presets (ASS subtitle formatting)
 SUBTITLE_PRESETS = {
