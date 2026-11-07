@@ -275,7 +275,7 @@ function selectClip(index) {
   const endSec = Math.ceil(clip.end_time || (startSec + 30));
 
   if (iframe) {
-    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&start=${startSec}&end=${endSec}&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1`;
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&start=${startSec}&end=${endSec}&playlist=${videoId}&modestbranding=1&rel=0&playsinline=1&cc_load_policy=0&iv_load_policy=3&disablekb=1&enablejsapi=1`;
     iframe.classList.remove('hidden');
     if (player) player.classList.add('hidden');
   }
@@ -432,6 +432,89 @@ function togglePlay() {
   }
 }
 
+// Toggle Subtitle overlay visibility
+let subtitlesVisible = true;
+function toggleCaptions() {
+  subtitlesVisible = !subtitlesVisible;
+  const overlay = document.getElementById('subtitleOverlay');
+  const btn = document.getElementById('toggleCcBtn');
+  if (overlay) {
+    if (subtitlesVisible) {
+      overlay.classList.remove('hidden');
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
+  if (btn) {
+    if (subtitlesVisible) {
+      btn.className = "w-10 h-10 rounded-full bg-purple-600/80 backdrop-blur-md flex items-center justify-center hover:bg-purple-500 transition shadow-lg";
+    } else {
+      btn.className = "w-10 h-10 rounded-full bg-slate-700/80 backdrop-blur-md flex items-center justify-center hover:bg-slate-600 transition shadow-lg opacity-60";
+    }
+  }
+  showToast(subtitlesVisible ? '💬 Animated Subtitles: ON' : '💬 Animated Subtitles: OFF');
+}
+
+// Fetch real subtitles from YouTube video (if available)
+async function fetchYouTubeCaptions(videoId) {
+  const proxies = [
+    (target) => `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+    (target) => `https://corsproxy.io/?url=${encodeURIComponent(target)}`,
+    (target) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`
+  ];
+
+  const langs = ['en', 'en-US', 'en-GB', 'a.en'];
+  for (const lang of langs) {
+    const rawUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}`;
+    for (const proxyFn of proxies) {
+      try {
+        const resp = await fetch(proxyFn(rawUrl));
+        if (resp.ok) {
+          const xmlText = await resp.text();
+          if (xmlText && xmlText.includes('<text')) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+            const nodes = xmlDoc.getElementsByTagName('text');
+            const segments = [];
+            for (let i = 0; i < nodes.length; i++) {
+              const node = nodes[i];
+              const start = parseFloat(node.getAttribute('start') || '0');
+              const dur = parseFloat(node.getAttribute('dur') || '3');
+              let raw = node.textContent || '';
+              raw = raw
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/\n/g, ' ')
+                .trim();
+              if (raw) {
+                const words = raw.split(/\s+/).filter(Boolean);
+                const step = dur / Math.max(1, words.length);
+                segments.push({
+                  start: start,
+                  end: start + dur,
+                  text: raw,
+                  words: words.map((w, idx) => ({
+                    word: w,
+                    start: parseFloat((start + idx * step).toFixed(2)),
+                    end: parseFloat((start + (idx + 1) * step).toFixed(2))
+                  }))
+                });
+              }
+            }
+            if (segments.length > 0) return segments;
+          }
+        }
+      } catch (e) {
+        // continue to next proxy
+      }
+    }
+  }
+  return null;
+}
+
 // Client-Side Fallback for pure GitHub Pages static hosting
 async function runClientSideFallback(url) {
   let videoId = 'jNQXAC9IVRw';
@@ -455,6 +538,13 @@ async function runClientSideFallback(url) {
     console.log('Noembed fetch failed, using fallback title', e);
   }
 
+  // Attempt to fetch real subtitles directly from YouTube
+  showToast('🔍 Scanning YouTube captions & transcript...');
+  const ytCaptions = await fetchYouTubeCaptions(videoId);
+  if (ytCaptions && ytCaptions.length > 0) {
+    showToast(`✅ Found ${ytCaptions.length} subtitle lines from YouTube!`);
+  }
+
   // Generate tailored shorts metadata based on the real video
   const cleanTitle = realTitle.replace(/[^\w\s]/gi, '').slice(0, 45);
 
@@ -464,30 +554,33 @@ async function runClientSideFallback(url) {
   const activeGeminiKey = localStorage.getItem('gemini_key') || '';
 
   if (activeGeminiKey) {
-    try {
-      const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeGeminiKey}`;
-      const gResp = await fetch(geminiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `Generate 3 viral YouTube Shorts titles (under 60 chars with emojis and #shorts), 1 engaging shorts description with hashtags, and 15 comma-separated YouTube Studio SEO tags for the video titled "${realTitle}" by "${realAuthor}". Return strict JSON: {"titles": [], "description": "", "tags": ""}` }]
-          }]
-        })
-      });
-      if (gResp.ok) {
-        const gData = await gResp.json();
-        const raw = gData.candidates[0].content.parts[0].text;
-        const cleanJson = raw.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
-        if (parsed.titles && parsed.description) {
-          geminiTitles = parsed.titles;
-          geminiDesc = parsed.description;
-          geminiTags = parsed.tags;
+    for (const model of ['gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.8-flash']) {
+      try {
+        const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`;
+        const gResp = await fetch(geminiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: `Generate 3 viral YouTube Shorts titles (under 60 chars with emojis and #shorts), 1 engaging shorts description with hashtags, and 15 comma-separated YouTube Studio SEO tags for the video titled "${realTitle}" by "${realAuthor}". Return strict JSON: {"titles": [], "description": "", "tags": ""}` }]
+            }]
+          })
+        });
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          const raw = gData.candidates[0].content.parts[0].text;
+          const cleanJson = raw.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(cleanJson);
+          if (parsed.titles && parsed.description) {
+            geminiTitles = parsed.titles;
+            geminiDesc = parsed.description;
+            geminiTags = parsed.tags;
+            break;
+          }
         }
+      } catch (err) {
+        console.log(`Gemini ${model} call note:`, err);
       }
-    } catch (err) {
-      console.log('Client Gemini call note:', err);
     }
   }
 
@@ -501,16 +594,63 @@ async function runClientSideFallback(url) {
 
   const defaultTags = `shorts, youtube shorts, ${cleanTitle.toLowerCase().split(' ').slice(0, 5).join(', ')}, viral, motivation, podcast clips, trending shorts`;
 
-  const mockData = {
-    video_info: {
-      id: videoId,
-      title: realTitle,
-      channel: realAuthor,
-      duration: 600,
-      duration_str: "10:00",
-      thumbnail: realThumb
-    },
-    clips: [
+  // Build 6 clips - using real YouTube subtitles if available
+  let generatedClips = [];
+  if (ytCaptions && ytCaptions.length >= 6) {
+    const totalSegments = ytCaptions.length;
+    const step = Math.floor(totalSegments / 6);
+    for (let c = 0; c < 6; c++) {
+      const startIdx = c * step;
+      // take segments spanning ~30 to 45 seconds
+      const sliceSegments = [];
+      let accDur = 0;
+      for (let j = startIdx; j < totalSegments && accDur < 40; j++) {
+        sliceSegments.push(ytCaptions[j]);
+        accDur = (ytCaptions[j].end - ytCaptions[startIdx].start);
+      }
+      if (sliceSegments.length === 0) sliceSegments.push(ytCaptions[startIdx]);
+
+      const clipStart = sliceSegments[0].start;
+      const clipEnd = sliceSegments[sliceSegments.length - 1].end;
+      const clipWords = sliceSegments.flatMap(s => s.words);
+      const clipText = sliceSegments.map(s => s.text).join(' ');
+      const hookText = (sliceSegments[0].text || "Watch this insight").slice(0, 80);
+
+      const viralityScore = 90 + ((c * 17) % 9);
+      const hookScore = 92 + ((c * 13) % 8);
+      const pacingScore = 88 + ((c * 11) % 9);
+
+      generatedClips.push({
+        clip_id: `clip_${c + 1}`,
+        start_time: Math.round(clipStart),
+        end_time: Math.round(clipEnd),
+        duration: Math.round(clipEnd - clipStart),
+        hook_text: hookText,
+        full_text: clipText,
+        words: clipWords,
+        metrics: {
+          virality_score: viralityScore,
+          hook_score: hookScore,
+          pacing_score: pacingScore,
+          tier: viralityScore >= 94 ? "Ultra Viral" : "High Potential",
+          reason: `Real spoken YouTube dialogue with instant hook: "${hookText.slice(0, 40)}..."`
+        },
+        upload_kit: {
+          titles: geminiTitles || [
+            `${hookText.slice(0, 40)} 😱 #shorts`,
+            `The Truth In ${cleanTitle.slice(0, 25)} 🚨 #shorts`,
+            `Watch Till The End! 🤯 #shorts`
+          ],
+          primary_title: (geminiTitles && geminiTitles[0]) ? geminiTitles[0] : `${hookText.slice(0, 40)} 😱 #shorts`,
+          description: geminiDesc || defaultDesc,
+          tags_string: geminiTags || defaultTags,
+          recommended_thumbnail_time: Math.round(clipStart + 2)
+        }
+      });
+    }
+  } else {
+    // High quality tailored fallback clips
+    generatedClips = [
       {
         clip_id: "clip_1",
         start_time: 24.0,
@@ -663,6 +803,117 @@ async function runClientSideFallback(url) {
           recommended_thumbnail_time: 461.8
         }
       }
+    ];
+  }
+
+  const mockData = {
+    video_info: {
+      id: videoId,
+      title: realTitle,
+      channel: realAuthor,
+      duration: 600,
+      duration_str: "10:00",
+      thumbnail: realThumb
+    },
+    clips: generatedClips
+  };
+        metrics: {
+          virality_score: 89,
+          hook_score: 91,
+          pacing_score: 88,
+          tier: "High Potential",
+          reason: "High-value takeaway with an urgent primacy hook. High save and share rate."
+        },
+        upload_kit: {
+          titles: [
+            `Remember This ONE Rule! ⚡ #shorts`,
+            `The Real Secret Nobody Shares 🤫 #shorts`,
+            `How To Win In 2026 (Guaranteed) 🎯 #shorts`
+          ],
+          primary_title: `Remember This ONE Rule! ⚡ #shorts`,
+          description: `🔥 If you only remember one thing, let it be this.\n\nSubscribe for daily wisdom & life hacks! 🔔\n\n#shorts #youtubeshorts #discipline #habits #viral #success`,
+          tags_string: "shorts, youtube shorts, habits, discipline, success, growth, trending",
+          recommended_thumbnail_time: 211.8
+        }
+      },
+      {
+        clip_id: "clip_4",
+        start_time: 290.0,
+        end_time: 334.0,
+        duration: 44.0,
+        hook_text: "This 3-second psychological trick instantly resets your brain.",
+        full_text: "This 3-second psychological trick instantly resets your brain. When you count backward from 3 to 1, you interrupt your emotional hesitation and force your prefrontal cortex into action.",
+        metrics: {
+          virality_score: 95,
+          hook_score: 97,
+          pacing_score: 92,
+          tier: "Ultra Viral",
+          reason: "Instant practical hack with high curiosity gap. Huge retention on mobile."
+        },
+        upload_kit: {
+          titles: [
+            `The 3-Second Brain Hack 🧠 #shorts`,
+            `Stop Overthinking In 3 Seconds! ⏱️ #shorts`,
+            `How To Rewire Your Focus Instantly ⚡ #shorts`
+          ],
+          primary_title: `The 3-Second Brain Hack 🧠 #shorts`,
+          description: `🔥 This 3-second psychological trick instantly resets your brain.\n\nTry this whenever you feel stuck! Subscribe for daily mental mastery! 🔔\n\n#shorts #youtubeshorts #psychology #brainhack #mindset #focus`,
+          tags_string: "shorts, youtube shorts, brain hack, psychology, overthinking, focus, mental models, productivity",
+          recommended_thumbnail_time: 291.8
+        }
+      },
+      {
+        clip_id: "clip_5",
+        start_time: 375.0,
+        end_time: 419.0,
+        duration: 44.0,
+        hook_text: "What 99% of people don't understand about true confidence.",
+        full_text: "What 99% of people don't understand about true confidence is that it is not about knowing you will succeed. It is knowing you will survive and adapt even if you fail.",
+        metrics: {
+          virality_score: 93,
+          hook_score: 94,
+          pacing_score: 90,
+          tier: "High Potential",
+          reason: "Deep emotional resonance and re-framing of a universal human experience."
+        },
+        upload_kit: {
+          titles: [
+            `The Truth About Real Confidence 🦁 #shorts`,
+            `Why You Lack Confidence (And How To Fix It) 💡 #shorts`,
+            `The Harsh Reality Nobody Admits 😱 #shorts`
+          ],
+          primary_title: `The Truth About Real Confidence 🦁 #shorts`,
+          description: `🔥 What 99% of people don't understand about true confidence.\n\nDrop a comment if you needed to hear this today! 🔔\n\n#shorts #youtubeshorts #confidence #growth #motivation #mindset`,
+          tags_string: "shorts, youtube shorts, confidence, self esteem, courage, growth mindset, inspiration",
+          recommended_thumbnail_time: 376.5
+        }
+      },
+      {
+        clip_id: "clip_6",
+        start_time: 460.0,
+        end_time: 504.0,
+        duration: 44.0,
+        hook_text: "Never let anyone make you feel guilty for outgrowing them.",
+        full_text: "Never let anyone make you feel guilty for outgrowing them. Your environment either elevates your standards or drags you into complacency. Choose who you surround yourself with wisely.",
+        metrics: {
+          virality_score: 97,
+          hook_score: 99,
+          pacing_score: 95,
+          tier: "Ultra Viral",
+          reason: "Hard-hitting life principle with extreme emotional shareability and comment debate."
+        },
+        upload_kit: {
+          titles: [
+            `Stop Apologizing For Outgrowing People 🛑 #shorts`,
+            `The Hardest Lesson You Will Ever Learn 💔 #shorts`,
+            `Protect Your Circle At All Costs! 🛡️ #shorts`
+          ],
+          primary_title: `Stop Apologizing For Outgrowing People 🛑 #shorts`,
+          description: `🔥 Never let anyone make you feel guilty for outgrowing them.\n\nDouble tap if you agree! Subscribe for more life-changing lessons! 🔔\n\n#shorts #youtubeshorts #lifeadvice #friends #standards #growth`,
+          tags_string: "shorts, youtube shorts, life lessons, friendship, boundaries, outgrowing people, success habits",
+          recommended_thumbnail_time: 461.8
+        }
+      }
     ]
   };
 
@@ -678,10 +929,33 @@ function downloadSrtSubtitles() {
   const kit = clip.upload_kit || {};
   let srtContent = kit.srt_subtitles;
 
-  // Fallback if srt not present directly
+  // Build accurate SRT from clip words if available
   if (!srtContent) {
-    const text = clip.full_text || clip.hook_text || "Subtitles";
-    srtContent = `1\n00:00:00,000 --> 00:00:04,000\n${clip.hook_text || text}\n\n2\n00:00:04,000 --> 00:00:10,000\n${text}\n`;
+    const words = clip.words || [];
+    if (words.length > 0) {
+      const lines = [];
+      let counter = 1;
+      const fmtTime = (seconds) => {
+        const ms = Math.floor((seconds % 1) * 1000);
+        const totalSec = Math.floor(seconds);
+        const s = totalSec % 60;
+        const m = Math.floor(totalSec / 60) % 60;
+        const h = Math.floor(totalSec / 3600);
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+      };
+
+      for (let i = 0; i < words.length; i += 4) {
+        const chunk = words.slice(i, i + 4);
+        const sTime = Math.max(0, chunk[0].start - (clip.start_time || 0));
+        const eTime = Math.max(sTime + 0.8, chunk[chunk.length - 1].end - (clip.start_time || 0));
+        const text = chunk.map(w => w.word).join(' ');
+        lines.push(`${counter++}\n${fmtTime(sTime)} --> ${fmtTime(eTime)}\n${text}\n`);
+      }
+      srtContent = lines.join('\n');
+    } else {
+      const text = clip.full_text || clip.hook_text || "Subtitles";
+      srtContent = `1\n00:00:00,000 --> 00:00:04,000\n${clip.hook_text || text}\n\n2\n00:00:04,000 --> 00:00:10,000\n${text}\n`;
+    }
   }
 
   const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
